@@ -17,6 +17,8 @@ openspec/changes/archive/*
 *.jpeg
 *.gif
 *.webp
+*.zip
+*.tgz
 screenshots/
 
 # Python
