@@ -1,0 +1,30 @@
+# Ephemeral work area (fork clones, archives, scratch)
+workspace/
+
+# Secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# OpenSpec archives are moved to workspace/
+openspec/changes/archive/*
+!openspec/changes/archive/.gitkeep
+
+# Screenshots / images: we keep code, not images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+screenshots/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

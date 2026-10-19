@@ -1,0 +1,41 @@
+schema: spec-driven
+
+context: |
+  Repo: tracks artifacts (task cards, specs, final solution code) for training courses,
+  e.g. EPAM "AI Applications Development: From API to Agents" (Python by default).
+  Layout: <course>/<exercise>/README.md + solution/. Course forks live in ./workspace (git-ignored).
+  LLM provider: EPAM DIAL (OpenAI-compatible) via env vars OPENAI_BASE_URL, OPENAI_MODEL, OPENAI_API_KEY.
+  Solutions must be model-agnostic and work with whatever OPENAI_BASE_URL, OPENAI_MODEL (e.g. DeepSeek), and OPENAI_API_KEY are configured in .env; do not hard-code specific models or add extra OPENAI_*/DIAL_* env vars.
+  Never include secrets in artifacts; reference env var names only.
+  Archived changes are moved to workspace/openspec/archive/ (not committed). See AGENTS.md.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

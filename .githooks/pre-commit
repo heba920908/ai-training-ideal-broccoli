@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Blocks commits that include .env files or likely secrets.
+# Enable once per clone: git config core.hooksPath .githooks
+set -euo pipefail
+
+fail=0
+
+# 1. Forbidden files
+while IFS= read -r f; do
+  base=$(basename "$f")
+  if [[ "$base" != ".env.example" && ( "$base" == ".env" || "$base" == *.env || "$base" == .env.* ) ]]; then
+    echo "pre-commit: refusing to commit env file: $f" >&2
+    fail=1
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# 2. Secret-like patterns in added lines
+patterns=(
+  'dial-[A-Za-z0-9]{20,}'                                   # EPAM DIAL keys
+  'sk-[A-Za-z0-9_-]{20,}'                                   # OpenAI-style keys
+  'sk-ant-[A-Za-z0-9_-]{20,}'                               # Anthropic
+  'AIza[0-9A-Za-z_-]{35}'                                   # Google / Gemini
+  'gh[pousr]_[A-Za-z0-9]{36,}'                              # GitHub tokens
+  'glpat-[A-Za-z0-9_-]{20,}'                                # GitLab tokens
+  'AKIA[0-9A-Z]{16}'                                        # AWS access key
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  'Bearer [A-Za-z0-9._-]{20,}'
+  '(api[_-]?key|secret|token|password)["'"'"' ]*[:=][ "'"'"']*[A-Za-z0-9._-]{20,}'
+)
+regex=$(IFS='|'; echo "${patterns[*]}")
+
+# Report file:line only; never print the matched value.
+while IFS= read -r f; do
+  [[ "$f" == ".githooks/pre-commit" ]] && continue
+  lines=$(git show ":$f" 2>/dev/null | grep -Ein -- "$regex" | cut -d: -f1 | paste -sd, - || true)
+  if [[ -n "$lines" ]]; then
+    echo "pre-commit: possible secret in $f (line(s) $lines)" >&2
+    fail=1
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+if [[ $fail -ne 0 ]]; then
+  echo "pre-commit: commit blocked. Remove secrets (use env vars / .env.example placeholders)." >&2
+  exit 1
+fi
