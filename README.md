@@ -69,7 +69,7 @@ there. See each exercise README for details.
 |-----|-------------------------|----------------------------------------|-------------|
 | T1  | LLM API                 | `app_development/t1-llm-api-dial`      | Completed   |
 | T2  | LLM output tuning       | `app_development/t2-llms-output-tuning` | Completed   |
-| T3  | Content generation      | n/a                          | Not started |
+| T3  | Content generation      | `app_development/t3-content-generation` | Completed   |
 | T4  | RAG fundamentals        | n/a                          | Not started |
 | T5  | RAG advanced            | n/a                          | Not started |
 | T6  | Grounding               | n/a                          | Not started |
