@@ -65,10 +65,10 @@ there. See each exercise README for details.
 
 ### AI Applications Development: From API to Agents
 
-| #   | Exercise                | Folder                            | Status      |
-|-----|-------------------------|-----------------------------------|-------------|
-| T1  | LLM API                 | `app_development/t1-llm-api-dial` | Completed   |
-| T2  | LLM output tuning       | n/a                          | Not started |
+| #   | Exercise                | Folder                                 | Status      |
+|-----|-------------------------|----------------------------------------|-------------|
+| T1  | LLM API                 | `app_development/t1-llm-api-dial`      | Completed   |
+| T2  | LLM output tuning       | `app_development/t2-llms-output-tuning` | Completed   |
 | T3  | Content generation      | n/a                          | Not started |
 | T4  | RAG fundamentals        | n/a                          | Not started |
 | T5  | RAG advanced            | n/a                          | Not started |
