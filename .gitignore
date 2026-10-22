@@ -20,6 +20,8 @@ openspec/changes/archive/*
 *.zip
 *.tgz
 screenshots/
+# Exception: rendered PlantUML diagrams (source .puml lives alongside)
+!app_development/diagrams/*.png
 
 # Python
 .venv/

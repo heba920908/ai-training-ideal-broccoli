@@ -1,0 +1,39 @@
+@startuml t6-output-grounding
+!pragma layout smetana
+title T6 Output Grounding: Validate Generated Content Against Context
+
+left to right direction
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #555555
+
+actor "User" as user
+
+frame "App" as app #whitesmoke;line:gray;line.bold {
+  rectangle "Generation" as generation #lightyellow;line:orange;line.bold;text:darkorange
+  cloud "LLM" as llm #pink;line:red;line.bold;text:red
+  rectangle grounding #aliceblue;line:blue;line.bold;text:blue [
+<b>Output Grounding</b>
+----
+Validate claims
+Attribute sources
+Flag unsupported claims
+  ]
+  rectangle "Response with\ngrounded data" as response #palegreen;line:green;line.bold;text:darkgreen
+  file "Context Holder\nSource material / evidence" as context #lightcyan;line:teal;text:teal
+
+  generation <--> llm : prompt / completion
+  llm --> grounding : generated content
+  context ..> generation : source context
+  context --> grounding : verification evidence
+  grounding --> response : verified claims + citations
+}
+
+user --> generation : request
+response --> user : grounded response
+
+note bottom of grounding
+  Validate after generation using
+  verifiable source material.
+end note
+@enduml

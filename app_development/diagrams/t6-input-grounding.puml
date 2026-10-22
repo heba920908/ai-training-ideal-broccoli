@@ -1,0 +1,52 @@
+@startuml t6-input-grounding
+!pragma layout smetana
+title T6 Input Grounding: User Input -> Input grounding -> Prompt Augmentation -> LLM Generation
+
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam ArrowColor #555555
+
+actor "User" as user
+
+rectangle input #lightyellow;line:orange;line.bold;text:darkorange [
+<b>1. User Input</b>
+----
+"What is the warranty for ...?"
+]
+
+frame "2. Input Grounding (retrieval)" as grounding #aliceblue;line:blue;line.dashed;text:blue {
+  node "Retriever" as retriever #white;line:blue;text:blue
+  database "Vector DB\n(semantic similarity)" as vector #lightcyan;line:blue;line.dotted
+  database "Keyword index\n(hybrid search)" as keyword #lightcyan;line:blue;line.dotted
+  cloud "External APIs\n(real-time data)" as apis #lightcyan;line:blue;line.dotted
+  database "Knowledge graph /\nSQL / NoSQL" as kg #lightcyan;line:blue;line.dotted
+}
+
+file "3. Prompt Augmentation" as augment #palegreen;line:green;line.bold;text:darkgreen {
+  artifact "System prompt" as sys
+  artifact "Retrieved context" as ctx
+  artifact "User question" as q
+}
+
+cloud "4. LLM Generation\n(EPAM DIAL, OpenAI-compatible)" as llm #pink;line:red;line.bold;text:red
+
+rectangle "Grounded answer" as answer #lavender;line:purple;text:purple
+
+user --> input
+input --> retriever : query
+retriever --> vector
+retriever --> keyword
+retriever --> apis
+retriever --> kg
+retriever --> ctx : top-k relevant chunks
+input --> q
+augment --> llm : augmented prompt
+llm --> answer
+answer --> user
+
+note right of grounding
+  Key principle: quality and relevance
+  of retrieved context matter more
+  than the retrieval method.
+end note
+@enduml

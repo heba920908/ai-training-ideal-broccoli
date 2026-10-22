@@ -60,6 +60,10 @@ Use **OpenSpec** for *what* to build and **Superpowers** for *how* to build it.
 Screenshots: the course asks for them, but this repo stores **code, not images**. Don't commit
 images. Short console output pasted into the exercise README is fine (after redacting secrets).
 
+**Exception: diagrams.** PlantUML diagrams in `app_development/diagrams/` are committed as both
+the `.puml` source and the rendered `.png` (same basename). Use the `plantuml-diagrams` skill to
+create or update them; never commit a PNG without its `.puml` source.
+
 ## LLM provider: EPAM DIAL by default
 
 - Every exercise defaults to the **OpenAI-compatible API**, served through the **EPAM DIAL** proxy
