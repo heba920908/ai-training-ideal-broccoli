@@ -71,7 +71,7 @@ there. See each exercise README for details.
 | T2  | LLM output tuning       | `app_development/t2-llms-output-tuning` | Completed   |
 | T3  | Content generation      | `app_development/t3-content-generation` | Completed   |
 | T4  | RAG fundamentals        | [app_development/t4-rag-fundamentals](app_development/t4-rag-fundamentals/README.md) | Completed   |
-| T5  | RAG advanced            | n/a                          | Not started |
+| T5  | RAG advanced            | [app_development/t5-rag-advanced](app_development/t5-rag-advanced/README.md) | Completed   |
 | T6  | Grounding               | n/a                          | Not started |
 | T7  | Guardrails              | n/a                          | Not started |
 | T8  | Agent                   | n/a                          | Not started |
