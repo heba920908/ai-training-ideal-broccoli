@@ -71,6 +71,15 @@ Other adaptations:
 - [x] Fallback: answer the spoken question via `gemini-3.8-flash` and voice it with `tts-001` (`ballad` → `fable`)
 - [x] Save the answer as `.mp3`
 
+**4-1. Septima Ola introduction**:
+[script](solution/t3_content_generation/t4/septima_ola_intro.py),
+[run instructions](solution/t3_content_generation/README.md#4-1-septima-ola-spanish-concert-introduction)
+- [x] Approved Spanish narration naming CDMX (spoken as Ciudad de México), Valle de Chalco, Coacalco, and Puerto Rico
+- [x] DIAL speech plus locally synthesized swell, bass, and echo using `imageio-ffmpeg` (no system install)
+- [x] Preserve clean speech, final MP3 mix, and UTF-8 narration in git-ignored output
+- [x] Default to `nova`; optionally replace the synthetic bed using `--background-audio`
+- [x] Generate a pulsing A2 (110 Hz) WAV and mix it with existing Nova speech without another DIAL request
+
 **Bonus: Gemini Image Generation**
 - [ ] Native Gemini / Imagen 4 API calls skipped (no `GEMINI_API_KEY`); DIAL's `gemini-3.1-flash-image` is the
   configured image fallback
@@ -131,7 +140,7 @@ Offline unit tests (DIAL root derivation, `Api-Key` header, redaction, metadata-
 attachment download):
 
 ```bash
-env -u OPENAI_API_KEY uv run --with requests --with pytest \
+env -u OPENAI_API_KEY uv run --with requests --with pytest --with imageio-ffmpeg \
   --directory app_development/t3-content-generation/solution \
   python -m pytest t3_content_generation/test_t3_content_generation.py -v
 ```
@@ -148,7 +157,7 @@ uv run --with requests --with pytest --directory app_development/t3-content-gene
 
 - `solution/t3_content_generation/`: implemented `t1`–`t5` tasks, `_dial_client.py` (DIAL adapter + model
   resolution), `run_all.py` runner, and `test_t3_content_generation.py`. The upstream course `README.md` and
-  `_openai_client.py` are kept as-is.
+  `_openai_client.py` are retained; the README adds the standalone T4-1 run instructions.
 - `solution/commons/constants.py`: model-agnostic `OPENAI_*` configuration (same as T1/T2).
 - `output/` (git-ignored): `t1_poem.md`, `t2_catdog_*.png`, `t2_logo_magic_*.png`, `t3_transcriptions.md`,
   `t4_speech_*_<voice>.mp3`, `t5_answer.{mp3,md}`, plus one `<task>.log` per script with the full
@@ -157,6 +166,20 @@ uv run --with requests --with pytest --directory app_development/t3-content-gene
 ## Results / notes
 
 Live run against EPAM DIAL (`OPENAI_MODEL=DeepSeek-V4-Flash-2026-04-23`, key `<redacted>`).
+
+- **T4-1 Septima Ola (2026-10-23)**: the configured text model returned no audio;
+  `tts-hd-001` with `onyx` produced the approved Spanish introduction. Clean speech:
+  15.14 s (323,218 bytes); final stereo MP3 with locally mixed effects: 19.14 s
+  (460,843 bytes). Both decoded successfully with nonzero signal and no clipped
+  samples. Offline suite: 11 passed, 5 live tests skipped. Accent, pronunciation,
+  and artistic quality still require human listening before stage playback.
+- **T4-1 optional background extension (2026-10-23)**: `nova` is now the API/CLI
+  default. Installed FFmpeg is preferred with bundled fallback. The documented
+  command generated `a2_110hz.wav` (12.00 s; measured 110.0 Hz). Existing Nova
+  speech was remixed to `nova/t4_1_septima_ola_A2.mp3` (20.10 s; 484,040 bytes),
+  without a DIAL request or changes to clean speech. The mix decoded with no
+  clipped samples. Full offline suite: 17 passed, 5 live tests skipped, including
+  background looping/trimming and missing/corrupt/empty input rejection.
 
 - **T1 vision**: `gpt-5.6-terra` recognised both the elephant (with Kilimanjaro) and the *DIALX Community* logo:
   ```text

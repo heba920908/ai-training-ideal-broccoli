@@ -25,7 +25,12 @@ class Voice:
 #     (alloy, echo, fable, nova, onyx, shimmer). ash/ballad/coral/sage are rejected with HTTP 400.
 
 TEXT = "Why can't we say that black is white?"
-INSTRUCTIONS = "Speak in a cheerful and positive tone."
+INSTRUCTIONS = (
+    "Speak with a warm, welcoming smile and genuine delight, as though greeting "
+    "friends you are happy to see. Use bright, friendly intonation and natural "
+    "enthusiasm without shouting. Keep the words clear, the pace unhurried, and "
+    "leave generous pauses between sentences. Read only the supplied text."
+)
 VOICES = [Voice.coral, Voice.nova, Voice.onyx]
 CANDIDATES = default_candidates("tts-hd-001", "tts-001")
 
