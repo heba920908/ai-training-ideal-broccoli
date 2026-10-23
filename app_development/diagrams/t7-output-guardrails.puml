@@ -1,0 +1,16 @@
+@startuml t7-output-guardrails
+!pragma layout smetana
+title Output Guardrails: Before Release
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 0
+
+rectangle "AI draft response" as draft #AliceBlue
+rectangle "Output guardrails\nRedaction, safety, facts, policy" as checks #LightYellow
+rectangle "Checked response\nto user" as response #PaleGreen
+rectangle "Response withheld" as withheld #MistyRose
+
+draft --> checks
+checks --> response : Pass (redact if needed)
+checks --> withheld : Fail
+@enduml

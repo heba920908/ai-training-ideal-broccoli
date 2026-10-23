@@ -1,0 +1,16 @@
+@startuml t7-input-guardrails
+!pragma layout smetana
+title Input Guardrails: Before AI Processing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 0
+
+rectangle "User request" as request #AliceBlue
+rectangle "Input guardrails\nPatterns, PII, safety, policy" as checks #LightYellow
+rectangle "AI processing" as model #PaleGreen
+rectangle "Blocked request" as blocked #MistyRose
+
+request --> checks
+checks --> model : Pass (redact if needed)
+checks --> blocked : Fail
+@enduml
