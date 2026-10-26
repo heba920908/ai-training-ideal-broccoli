@@ -74,7 +74,7 @@ there. See each exercise README for details.
 | T5  | RAG advanced            | [app_development/t5-rag-advanced](app_development/t5-rag-advanced/README.md) | Completed   |
 | T6  | Grounding               | [app_development/t6-grounding](app_development/t6-grounding/README.md) | Completed   |
 | T7  | Guardrails              | [app_development/t7-guardrails](app_development/t7-guardrails/README.md) | Completed   |
-| T8  | Agent                   | n/a                          | Not started |
+| T8  | Agent                   | [app_development/t8-agent](app_development/t8-agent/README.md) | Completed   |
 | T9  | MCP fundamentals        | n/a                          | Not started |
 | T10 | MCP advanced            | n/a                          | Not started |
 | T11 | MCP auth                | n/a                          | Not started |
