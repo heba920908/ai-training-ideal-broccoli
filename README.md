@@ -75,7 +75,7 @@ there. See each exercise README for details.
 | T6  | Grounding               | [app_development/t6-grounding](app_development/t6-grounding/README.md) | Completed   |
 | T7  | Guardrails              | [app_development/t7-guardrails](app_development/t7-guardrails/README.md) | Completed   |
 | T8  | Agent                   | [app_development/t8-agent](app_development/t8-agent/README.md) | Completed   |
-| T9  | MCP fundamentals        | n/a                          | Not started |
+| T9  | MCP fundamentals        | [app_development/t9-mcp-fundamentals](app_development/t9-mcp-fundamentals/README.md) | Completed   |
 | T10 | MCP advanced            | n/a                          | Not started |
 | T11 | MCP auth                | n/a                          | Not started |
 | T12 | Skills                  | n/a                          | Not started |
