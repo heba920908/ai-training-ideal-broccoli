@@ -1,0 +1,29 @@
+@startuml t9-mcp-server
+!pragma layout smetana
+title MCP Server: UMS Capabilities and Service Adapter
+left to right direction
+skinparam shadowing false
+
+node "AI Host" as host #aliceblue;line:blue;text:blue {
+  component "MCP Client" as client #lightblue;line:blue;text:blue
+}
+
+frame "MCP Server: UMS Adapter" as server #palegreen;line:green;line.bold;text:darkgreen {
+  component "Auth\nAuthenticate and authorize" as auth #mistyrose;line:red;text:red
+  component "Tools\nActions and API operations" as tools #lightgreen;line:green;text:darkgreen
+  component "Prompts\nRead-only instruction templates" as prompts #lightyellow;line:orange;text:darkorange
+  component "Resources\nRead-only context and data" as resources #lightcyan;line:teal;text:teal
+}
+
+cloud "Users Management Service\nREST API" as ums #lightyellow;line:orange;text:darkorange
+
+client <--> server : MCP / JSON-RPC
+server --> ums : REST calls
+tools --> ums : Perform actions
+resources --> ums : Read context
+
+note bottom of server
+  The server owns the adapter and exposes
+  tools, prompts, and resources to clients.
+end note
+@enduml

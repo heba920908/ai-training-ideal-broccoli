@@ -36,7 +36,47 @@ The orchestration model's main task is to handle user requests, and it can 'orch
 It doesn't own any tools itself, but as a part of the Agent system, it knows that it can call/use some tools within the Agent to handle user requests. 
 
 ```plantuml
-HERE should be a diagram of agent orchestration
+@startuml t8-agent-orchestration
+!pragma layout smetana
+title Agent Orchestration: Application, Model, and Tools
+left to right direction
+skinparam shadowing false
+
+actor User #aliceblue;line:blue;text:blue
+
+frame "Agent application" #aliceblue;line:blue {
+  node controller #lightblue;line:blue [
+    Orchestrator
+    Controls the tool-use loop
+  ]
+  database history #lightyellow;line:goldenrod [
+    Conversation history
+    User, assistant, and tool messages
+  ]
+  rectangle tools #palegreen;line:green [
+    Tools
+    Function schemas and implementations
+  ]
+}
+
+cloud model #mistyrose;line:red [
+  Orchestration model (LLM)
+  Chooses tool calls or a final answer
+]
+
+User --> controller : User request
+controller --> history : Store messages
+controller --> model : History + tool schemas
+model --> controller : Tool calls or final answer
+controller --> tools : Execute requested functions
+tools --> controller : Tool results
+controller --> User : Final response
+
+note bottom of controller
+  The model requests tool calls.
+  The application executes them and sends results back.
+end note
+@enduml
 ```
 
 ### Tool Use Agentic Pattern
@@ -44,19 +84,63 @@ HERE should be a diagram of agent orchestration
 This pattern we will implement in a practical task and it is commonly used nowadays.
 
 ```plantuml
-HERE should be a diagram of tool use agentic pattern
-Step 0 -- User call agent
+@startuml t8-tool-use-agentic-pattern
+!pragma layout smetana
+title Tool Use Agentic Pattern: Request, Execute, Repeat
+top to bottom direction
+skinparam shadowing false
 
-Step 1:  -- box linked to tool
-  1. Get all tools schemas
-  2. Send request twith tools and user message
-  3. Get response from LLM ----
+actor User #aliceblue;line:blue;text:blue
+rectangle receive #aliceblue;line:blue [
+  Step 0: Receive request
+  Append user message to history
+]
+rectangle request #lightblue;line:blue [
+  Step 1: Call the model
+  Get tool schemas
+  Send history + schemas; receive response
+]
+rectangle check #lightyellow;line:goldenrod [
+  Step 2: Inspect response
+  Are tool calls present?
+]
+rectangle execute #palegreen;line:green [
+  Step 3a: Handle tool calls
+  Append assistant tool-call message
+  Execute each call
+  Append each result with its tool_call_id
+]
+rectangle tools #palegreen;line:green [
+  Tool registry
+  Schemas and callable functions
+]
+rectangle repeat #lightblue;line:blue [
+  Step 4: Continue the loop
+  Use updated history
+]
+rectangle respond #mistyrose;line:red [
+  Step 3b: Return final answer
+  Append assistant message to history
+  Send the answer to the user
+]
 
-Step 2: Check if tool calls are present
+User --> receive : Request
+receive --> request
+tools ..> request : Tool schemas
+request --> check : Model response
+check --> execute : Yes
+execute --> tools : Function names + arguments
+tools --> execute : Results
+execute --> repeat
+repeat --> request : Next model request
+check --> respond : No (final answer)
+respond --> User : Final response
 
-Step 3: If tools are present call tehem save tools to message history and continue if not put an assistant message to the user
-
-Step 4: Make recursive call with history
+note bottom of repeat
+  Include history and tool schemas on every model request.
+  Repeat until the model returns a final answer.
+end note
+@enduml
 ```
 
 ## Tool Description

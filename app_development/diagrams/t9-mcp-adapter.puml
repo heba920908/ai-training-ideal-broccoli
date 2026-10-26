@@ -1,0 +1,26 @@
+@startuml t9-mcp-adapter
+!pragma layout smetana
+title MCP Replaces Per-Client UMS Connectors
+left to right direction
+skinparam shadowing false
+
+node "AI IDE / Application" as host #aliceblue;line:blue;text:blue {
+  component "MCP Client" as client #lightblue;line:blue;text:blue
+}
+
+frame "Vendor responsibility" as vendor #palegreen;line:green;line.bold;text:darkgreen {
+  node "MCP Server" as server #lightgreen;line:green;text:darkgreen {
+    component "UMS adapter\nMaps MCP to UMS API v2" as adapter #palegreen;line:green;text:darkgreen
+  }
+}
+
+cloud "UMS REST API v2" as ums #lightyellow;line:orange;text:darkorange
+
+client <--> server : MCP / JSON-RPC\nSchemas, calls, and results
+adapter --> ums : REST
+
+note bottom of vendor
+  Clients implement MCP once.
+  The vendor updates its adapter when UMS changes.
+end note
+@enduml

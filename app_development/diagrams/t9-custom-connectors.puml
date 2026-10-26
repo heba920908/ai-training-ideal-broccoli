@@ -1,0 +1,29 @@
+@startuml t9-custom-connectors
+!pragma layout smetana
+title The Custom Connector Problem
+left to right direction
+skinparam shadowing false
+
+frame "AI applications" as clients #aliceblue;line:blue;line.bold;text:blue {
+  node "Assistant A" as appa #lightblue;line:blue;text:blue {
+    component "Custom connector\n(language / API version A)" as connectorA #mistyrose;line:red;text:red
+  }
+  node "Assistant B" as appb #lightblue;line:blue;text:blue {
+    component "Custom connector\n(language / API version B)" as connectorB #mistyrose;line:red;text:red
+  }
+  node "Assistant C" as appc #lightblue;line:blue;text:blue {
+    component "Custom connector\n(language / API version C)" as connectorC #mistyrose;line:red;text:red
+  }
+}
+
+cloud "UMS REST API\n(vendor-controlled contract)" as ums #lightyellow;line:orange;text:darkorange
+
+connectorA --> ums : REST
+connectorB --> ums : REST
+connectorC --> ums : REST
+
+note bottom of ums
+  Each client reimplements integration logic.
+  API changes require every connector to adapt.
+end note
+@enduml
