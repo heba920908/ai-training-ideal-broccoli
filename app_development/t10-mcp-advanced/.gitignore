@@ -1,0 +1,6 @@
+/solution/output/
+/solution/t10_mcp_advanced/data-t10/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+.venv/

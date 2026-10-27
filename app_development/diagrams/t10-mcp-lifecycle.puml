@@ -1,0 +1,40 @@
+@startuml t10-mcp-lifecycle
+title MCP Lifecycle: Streamable HTTP (2025-06-18)
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "MCP Client" as client #aliceblue
+participant "MCP Server" as server #palegreen
+
+== Initialization ==
+client -> server : POST initialize (id: 1)\nVersion, client capabilities, client info
+server --> client : Initialize result (id: 1)\nVersion, server capabilities, server info
+note over client, server #lightyellow
+  The server may assign an Mcp-Session-Id.
+  Subsequent requests include the negotiated
+  MCP-Protocol-Version and any assigned session ID.
+end note
+client ->> server : POST notifications/initialized (no id)
+server --> client : HTTP 202 Accepted (no body)
+
+== Operation: Discovery and Action ==
+client -> server : POST tools/list (id: 2)
+server --> client : Tool names, descriptions, input schemas
+client -> server : POST tools/call (id: 5)\nget_user_by_id(user_id: 999)
+server --> client : Tool result or JSON-RPC error (id: 5)
+note over client, server #lightcyan
+  Resources: resources/list, then resources/read.
+  Prompts: prompts/list, then prompts/get.
+  Request responses may use JSON or SSE.
+end note
+
+== Shutdown ==
+opt Session assigned and no longer needed
+  client -> server : DELETE MCP endpoint + session/version headers
+  server --> client : Terminated, or HTTP 405 if unsupported
+end
+note over client, server #lightyellow
+  Close associated HTTP connections and SSE streams.
+  MCP has no JSON-RPC shutdown method.
+end note
+@enduml

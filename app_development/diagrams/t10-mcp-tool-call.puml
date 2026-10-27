@@ -1,0 +1,49 @@
+@startuml t10-mcp-tool-call
+title MCP Tools: Discovery, Selection, and Execution
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Model" as model #lightyellow
+participant "AI Host" as host #aliceblue
+participant "MCP Client" as client #lightblue
+participant "MCP Server" as server #palegreen
+participant "Users Management\nService" as api #mistyrose
+
+== Discovery (after initialization) ==
+host -> client : Discover available tools
+client -> server : tools/list
+server --> client : Tool definitions and JSON Schemas
+client --> host : Available tools
+host -> model : User request and tool definitions
+
+== Selection and Policy ==
+model --> host : Propose get_user_by_id(user_id: 999)
+host -> host : Apply permissions and approval policy
+note over host, client #lightyellow
+  Invocation proceeds only if permitted.
+end note
+host -> client : Invoke approved tool call
+client -> server : tools/call (id: 5)
+server -> server : Validate request and access
+
+== Alternative Outcomes ==
+alt Tool succeeds
+  server -> api : Fetch user 999
+  api --> server : User record
+  server --> client : result.content + isError: false
+else Tool operation fails
+  server -> api : Fetch user 999
+  api --> server : Service unavailable
+  server --> client : result.content + isError: true
+else Protocol handling fails
+  server --> client : error.code + error.message
+end
+client --> host : Correlated response (id: 5)
+host -> model : Tool result, or handled failure context
+model --> host : User-facing answer
+
+note over client, server #lightcyan
+  HTTP transport failures are a separate layer.
+  A response has either result or error, never both.
+end note
+@enduml

@@ -1,0 +1,8 @@
+target-version = "py311"
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "BLE", "TRY002", "TRY004"]
+ignore = ["BLE001"]
+
+[lint.per-file-ignores]
+"agent/clients/custom_mcp_client.py" = ["TRY004"]
