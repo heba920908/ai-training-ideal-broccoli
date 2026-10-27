@@ -1,0 +1,56 @@
+{
+  "realm": "mcp-realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "accessTokenLifespan": 60,
+  "roles": {"realm": [{"name": "mcp-user"}]},
+  "clients": [{
+    "clientId": "mcp-client",
+    "enabled": true,
+    "protocol": "openid-connect",
+    "publicClient": true,
+    "standardFlowEnabled": true,
+    "implicitFlowEnabled": false,
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": false,
+    "redirectUris": ["http://127.0.0.1:9999/callback"],
+    "webOrigins": ["http://127.0.0.1:9999"],
+    "attributes": {"pkce.code.challenge.method": "S256"},
+    "defaultClientScopes": ["roles"],
+    "protocolMappers": [{
+      "name": "mcp-audience",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-audience-mapper",
+      "config": {
+        "included.custom.audience": "mcp-users",
+        "access.token.claim": "true",
+        "id.token.claim": "false"
+      }
+    }, {
+      "name": "realm-roles",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-usermodel-realm-role-mapper",
+      "config": {
+        "claim.name": "realm_access.roles",
+        "jsonType.label": "String",
+        "multivalued": "true",
+        "access.token.claim": "true",
+        "id.token.claim": "false",
+        "usermodel.realmRoleMapping.rolePrefix": ""
+      }
+    }]
+  }],
+  "users": [{
+    "username": "allowed-user",
+    "enabled": true,
+    "realmRoles": ["mcp-user"],
+    "requiredActions": []
+  }, {
+    "username": "no-role-user",
+    "enabled": true,
+    "realmRoles": [],
+    "requiredActions": []
+  }]
+}

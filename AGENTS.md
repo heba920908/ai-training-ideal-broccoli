@@ -50,12 +50,24 @@ Use **OpenSpec** for *what* to build and **Superpowers** for *how* to build it.
    creates `openspec/changes/<change>/` (proposal, design, specs, tasks). Validate with `openspec validate <change>`.
 2. **Design / plan**: Superpowers `brainstorming`, then `writing-plans` for non-trivial work.
    Save plans and specs in `workspace/superpowers/` unless the user asks for them to be kept.
-3. **Implement**: `openspec-apply-change`, using Superpowers `test-driven-development` and
+3. **Review / approve**: Base the implementation plan on the applicable OpenSpec proposal,
+  design, acceptance scenarios, and ordered tasks. Validate the change, present links to these
+  artifacts, summarize scope and material decisions, and explicitly ask the user to review and
+  approve the OpenSpec plan. Creating a plan is not approval to implement it; wait for explicit
+  approval before changing exercise code or running live experiments.
+4. **Implement**: After approval, continue autonomously through the approved OpenSpec tasks,
+  focused verification, recording, and archiving without repeatedly asking permission for
+  routine in-scope steps. Use `openspec-apply-change`, Superpowers `test-driven-development`, and
    `verification-before-completion`. Code is written and run in the fork under `workspace/`.
-4. **Record**: copy the final code into `<course>/<exercise>/solution/`. Tick the checklist and
+5. **Record**: copy the final code into `<course>/<exercise>/solution/`. Tick the checklist and
    fill in the "Results / notes" section in the exercise README. Update the root progress table.
-5. **Archive**: `openspec-archive-change` (this syncs delta specs into `openspec/specs/`), then move
+6. **Archive**: `openspec-archive-change` (this syncs delta specs into `openspec/specs/`), then move
    the archived change into `workspace/openspec/archive/`.
+
+Approval applies only to the reviewed scope and decisions. Ask again for material scope or
+security-boundary changes, destructive actions, or a blocker that needs a user decision. Report
+unavailable verification honestly; do not silently waive acceptance criteria. Plan approval does
+not authorize commits or pushes, which always require separate explicit user approval.
 
 Screenshots: the course asks for them, but this repo stores **code, not images**. Don't commit
 images. Short console output pasted into the exercise README is fine (after redacting secrets).
