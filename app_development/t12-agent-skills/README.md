@@ -3,7 +3,8 @@
 Custom skill-enabled agent using EPAM DIAL, local progressive skill loading,
 and a sandboxed MCP Python interpreter. Managed Anthropic/OpenAI-compatible
 examples are implemented and covered by offline tests; **all managed live runs
-are explicitly deferred by the user**. No managed uploads or paid calls were made.
+remain unrun and were explicitly waived for closure by the user on 2026-10-28**.
+No managed uploads or paid calls were made.
 
 ## Source
 
@@ -12,7 +13,8 @@ are explicitly deferred by the user**. No managed uploads or paid calls were mad
 - Original assignment: [solution/t12_skills/README.md](solution/t12_skills/README.md).
 - Final code: [solution/t12_skills](solution/t12_skills), with only the required
   shared models in [solution/commons/models](solution/commons/models).
-- Copy inventory: [copy-manifest.md](../../openspec/changes/t12-agent-skills/copy-manifest.md).
+- Acceptance specification: [skill-enabled-agents](../../openspec/specs/skill-enabled-agents/spec.md).
+  The standalone inventory contains 40 source files, including the two shared models.
 - Interpreter source: <https://github.com/khshanovskyi/mcp-python-code-interpreter>.
   The inspected image contains FastMCP 4.0.5 and uses stateless HTTP transport;
   kernel state is retained through the explicit `session_id` tool argument.
@@ -29,9 +31,12 @@ are explicitly deferred by the user**. No managed uploads or paid calls were mad
 - [x] Start the pinned local interpreter and verify persistent Python state.
 - [x] Run all five converter prompts through the real custom DIAL agent.
 - [x] Verify standalone imports, 119 tests, Ruff, source parity, links, and secrets.
-- [ ] Run managed Anthropic samples and container-reuse acceptance: deferred.
-- [ ] Run managed Skills/Responses samples through DIAL: deferred.
-- [ ] Archive the change: withheld while managed live evidence is missing.
+- Managed Anthropic samples and container-reuse acceptance: unrun, explicitly
+  waived by the user for closure on 2026-10-28.
+- Managed Skills/Responses samples through DIAL: unrun, explicitly waived by
+  the user for closure on 2026-10-28.
+- [x] Archived on 2026-10-28 with these gaps recorded in the
+  [closure record](../../openspec/closure-2026-10-28.md); no live-check pass is claimed.
 
 ## Setup
 
@@ -160,10 +165,11 @@ mechanical Ruff formatting/import changes; their numeric behavior is unchanged.
   check output, runtime metadata, and packaging checks. No images are recorded.
 - The source request-flow HTML is retained as a reference. It requests optional
   Google Fonts over the network; full offline font rendering is not claimed.
-- Managed live calls/uploads are deferred, not passed. A future managed run
+- Managed live calls/uploads are unrun and waived for archival, not passed. A future managed run
   needs an explicit finite budget, credentials, and supported APIs. There is
   no public OpenAI fallback or account-wide cleanup. Existing/reused resources
-  are preserved. Missing live evidence prevents full acceptance and archival.
+  are preserved. Administrative closure does not establish managed-provider live
+  compatibility or full operational acceptance.
 
 ## Shutdown
 

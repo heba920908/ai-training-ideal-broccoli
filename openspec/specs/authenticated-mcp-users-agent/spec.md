@@ -1,4 +1,17 @@
-## ADDED Requirements
+# authenticated-mcp-users-agent Specification
+
+## Purpose
+Provide a standalone, authenticated stateless MCP users agent with environment-only
+API-key authentication, Keycloak PKCE/JWT authorization, bounded token refresh,
+and model-agnostic DIAL integration.
+
+## Acceptance Status
+
+The change is closed with explicitly waived live OAuth/browser/refresh checks,
+not evidence that those checks passed. See the
+[2026-10-28 closure record](../../closure-2026-10-28.md).
+
+## Requirements
 
 ### Requirement: Preserve stateless MCP behavior with authenticated SDK transport
 

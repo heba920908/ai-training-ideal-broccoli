@@ -9,8 +9,9 @@ No commits/pushes, bulk cleanup, public OpenAI fallback, or live budget waiver.
 Tasks below are checked only where evidence exists. Implementation/startup was
 explicitly approved on 2026-10-28. The user subsequently deferred both managed
 live paths completely, retaining the custom EPAM DIAL path as the current focus.
-No managed calls/uploads were made. Missing managed live evidence still prevents
-full acceptance and archival; the deferral is not a verification waiver.
+No managed calls/uploads were made. On 2026-10-28 the user subsequently approved
+archiving all changes with these managed live checks explicitly waived. This is
+administrative closure with known gaps, not evidence that the checks passed.
 
 Each implementation task follows: add the named failing tests, run the focused
 check and observe the expected behavioral failure, implement the smallest owning
@@ -50,8 +51,8 @@ approval. Paths below are relative to the fork/standalone solution root.
 
 - [x] 6.1 Verify the upstream interpreter image/source contract and pin a working immutable digest in `docker-compose.yml`. Isolate the T12 project, loopback binding, resource limits, no host/secret mounts, and owned shutdown command. Check occupied ports without stopping unrelated services. Validate compose configuration before starting the approved local interpreter; record safe runtime metadata.
 - [x] 6.2 Test then add `probe.py` fixed-query captures and numeric assertions using existing owning test files. Run real interpreter discovery and two executions reusing returned session state; run the custom DIAL agent on all five converter samples. Capture actual read/execute traces, numeric outputs, safe model/session metadata, and exit statuses in ignored output. Verify the initial prompt did not preload full skill bodies/scripts.
-- [ ] 6.3 Confirm managed API access and the finite live-run budget before paid calls. Run Anthropic style-guide (three prompts) and calculator (four prompts), plus a two-turn container-reuse check, with usage and owned cleanup evidence. Missing access/budget leaves this task unchecked; no fabricated success or account-wide deletion.
-- [ ] 6.4 Run the same managed OpenAI-compatible samples and response-chain reuse through the configured DIAL route only, with usage and owned cleanup evidence. If Skills/Responses is unsupported, capture a sanitized capability blocker and leave this task unchecked; changing provider boundaries requires a new user decision.
+- Waived 6.3: all Anthropic managed live samples, container reuse, usage, and cleanup evidence remain unrun. The user explicitly waived them for archival on 2026-10-28. No managed paid calls/uploads were made; future runs still need a finite approved budget.
+- Waived 6.4: all DIAL managed Skills/Responses live samples, response chaining, usage, and cleanup evidence remain unrun. The user explicitly waived them for archival on 2026-10-28. Configured-route support is unverified; no public fallback is authorized.
 
 ## 7. Standalone Recording and Verification
 
@@ -78,6 +79,7 @@ approval. Paths below are relative to the fork/standalone solution root.
 	boundaries, and standalone delivery have offline and custom-live evidence.
 	Managed lifecycle scenarios have fake-client evidence only; real managed
 	execution/access/cost scenarios remain deferred under 6.3 and 6.4.
-- Strict OpenSpec validation passed. Task 7.5 remains open solely because
-	archival/full acceptance must wait for the missing managed live evidence.
-	No commits, pushes, or unrelated cleanup were performed.
+- Strict OpenSpec validation passed. On 2026-10-28 the user approved archival
+	with the remaining live checks explicitly waived, not reported as passing.
+	See `openspec/closure-2026-10-28.md` for the durable decision record. This
+	closure operation does not authorize another commit, push, or unrelated cleanup.

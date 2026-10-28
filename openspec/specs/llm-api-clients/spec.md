@@ -1,13 +1,12 @@
-# Spec Delta
+# llm-api-clients Specification
 
 ## Purpose
-
 An interactive console chat that talks to LLMs through several vendor APIs (OpenAI Chat Completions,
 OpenAI Responses, Anthropic Messages, Gemini). Each vendor is called through its official SDK and
 through raw HTTP, with sync and streaming modes, and all configuration comes from environment variables
 so it runs against EPAM DIAL.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Interactive chat loop
 The chat CLI SHALL read user input in a loop, send the full conversation history (all prior user and

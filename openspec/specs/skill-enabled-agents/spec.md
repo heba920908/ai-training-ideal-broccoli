@@ -1,4 +1,18 @@
-## ADDED Requirements
+# skill-enabled-agents Specification
+
+## Purpose
+Provide reusable skill packages and a bounded, model-agnostic DIAL agent with
+progressive local skill loading, confined file access, and persistent MCP Python
+execution, alongside scoped managed-provider SDK examples.
+
+## Acceptance Status
+
+The custom DIAL path has real execution evidence. Managed-provider live checks
+were not run and were explicitly waived for closure; SDK/fake-client coverage
+does not establish live API compatibility. See the
+[2026-10-28 closure record](../../closure-2026-10-28.md).
+
+## Requirements
 
 ### Requirement: Complete reusable skill packages
 The solution SHALL provide valid calculator, style-guide, and unit-converter

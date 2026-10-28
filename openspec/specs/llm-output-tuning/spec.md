@@ -1,10 +1,9 @@
-# Spec Delta
+# llm-output-tuning Specification
 
 ## Purpose
-
 Experiment with and verify LLM output-tuning parameters on OpenAI Chat Completions and OpenAI Responses APIs against EPAM DIAL, with step-by-step non-interactive execution and interactive chat support.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Model-agnostic DIAL endpoint routing for output tuning
 `OpenAIChatCompletionsClient` and `OpenAIResponsesClient` SHALL read `OPENAI_BASE_URL`, `OPENAI_MODEL`, and `OPENAI_API_KEY` via `commons/constants.py` and route requests to `<OPENAI_BASE_URL>/chat/completions` and `<OPENAI_BASE_URL>/responses` respectively.

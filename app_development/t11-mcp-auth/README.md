@@ -4,7 +4,8 @@ API-key and Keycloak OAuth protection for the course's stateless FastMCP user
 tools, authenticated SDK clients, and a model-agnostic DIAL agent.
 
 **Status:** Implemented and offline-verified. Real API-key CRUD and DIAL checks
-passed. Browser OAuth acceptance remains blocked; this change is not archived.
+passed. Archived on 2026-10-28 with remaining browser/OAuth/refresh live checks
+explicitly waived by the user, not recorded as passing.
 
 ## Source
 
@@ -31,10 +32,10 @@ tool names and hand-written server are not used.
 - [x] Add credential-free realm sources and isolated loopback infrastructure.
 - [x] Run real API-key auth/CRUD and configured-DIAL checks with fixture cleanup.
 - [x] Verify the standalone solution and fork with offline tests and Ruff.
-- [ ] Complete allowed/no-role browser logins and live JWT-negative checks.
-- [ ] Verify proactive refresh after real token expiry without reconnecting.
-- [ ] Run the configured-DIAL single query using browser OAuth.
-- [ ] Complete acceptance reconciliation and archive the OpenSpec change.
+- Allowed/no-role browser logins and live JWT negatives: unrun, waived for closure.
+- Proactive refresh after real token expiry: unrun, waived for closure.
+- Configured-DIAL browser-OAuth query: unrun, waived for closure.
+- [x] Reconcile verified/waived checks and archive the OpenSpec change.
 
 ## Boundaries
 
@@ -203,9 +204,11 @@ Observed on 2026-10-27 using Python 3.14.3:
   a durable committed artifact.
 - The T11-only test backend was stopped after verification. Existing T10
   services/records/volumes were not stopped or deleted.
-- **Blocked:** Keycloak passwords are not configured. Allowed/no-role browser
-  login, real JWT-negative checks, post-expiry refresh, and OAuth DIAL acceptance
-  have not run. No sample transcript replaces them. Keep the OpenSpec change open.
+- **Waived for closure on 2026-10-28:** Keycloak passwords were not configured.
+  Allowed/no-role browser login, real JWT-negative checks, post-expiry refresh,
+  and OAuth DIAL acceptance have not run. The user explicitly approved archival
+  with these gaps recorded, not represented as passing. See the
+  [closure record](../../openspec/closure-2026-10-28.md).
 
 ### Acceptance Mapping
 
@@ -222,7 +225,7 @@ Observed on 2026-10-27 using Python 3.14.3:
 | Isolated infrastructure and credential-free rendered realm sources | `test_auth.py`; T11-only live UMS container |
 | Independent delivery and no fork dependency | full standalone suite, scoped Ruff, source comparison and secret scan |
 | Approved-plan gate | explicit user approval of proposal/design/spec/tasks before implementation |
-| Truthful incomplete acceptance | unchecked browser/live-refresh/OAuth-DIAL tasks; no archive |
+| Closure with explicit live-check waivers | browser/live-refresh/OAuth-DIAL checks unrun; user approved archival with the gaps recorded on 2026-10-28 |
 
 The course `UserUpdate` excludes `about_me`; the probe changes the supported
 `name` field instead of silently assuming unsupported updates work. Final review
