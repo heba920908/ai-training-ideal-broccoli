@@ -1,0 +1,34 @@
+@startuml t12-custom-agent-skills
+!pragma layout smetana
+title Custom Agent with Skills: Deployment
+skinparam shadowing false
+
+actor "User" as user #aliceblue;line:blue;text:blue
+
+node "Application (your infrastructure)" as app #aliceblue;line:blue;line.bold;text:blue {
+  component "Agent loop\nload_skills + XML system prompt" as agent #lightblue;line:blue;text:blue
+  component "Local tools\nread_skill / read_resource" as tools #lightgreen;line:green;text:darkgreen
+  component "MCP Client" as mcpclient #lightcyan;line:teal;text:teal
+  folder "skills/ (local filesystem)" as skills #lightyellow;line:orange;text:darkorange {
+    file "SKILL.md" as skillmd
+    file "references/REFERENCE.md" as ref
+    artifact "scripts/convert.py" as script
+  }
+}
+
+cloud "Orchestration Model\n(OpenAI-compatible API, e.g. DIAL)" as llm #lavender;line:purple;line.bold;text:purple
+
+node "MCP Server: code execution\n(Python interpreter, or other)" as pyinterp #palegreen;line:green;line.bold;text:darkgreen
+
+user --> agent : request
+agent <--> llm : chat.completions\n(messages + tool calls)
+agent --> tools : read_skill / read_resource
+tools --> skills : read files
+agent --> mcpclient : execute_code
+mcpclient <--> pyinterp : MCP / JSON-RPC
+
+note bottom of skills
+  Skills are plain files: the app's tools must
+  read them; the model never sees the disk.
+end note
+@enduml

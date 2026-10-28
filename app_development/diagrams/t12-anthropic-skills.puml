@@ -1,0 +1,35 @@
+@startuml t12-anthropic-skills
+!pragma layout smetana
+title Anthropic Skills API: Skill Mounting and Execution
+skinparam shadowing false
+
+actor "User / Client App" as user #aliceblue;line:blue;text:blue
+
+cloud "Anthropic Infrastructure" as anthropic #lavender;line:purple;line.bold;text:purple {
+  node "Claude Model" as claude #lightyellow;line:orange;text:darkorange
+  database "Skill Storage\n(/v1/skills, skill_id)" as storage #mistyrose;line:red;text:red
+  node "Linux Container (sandbox)\nno internet, pre-installed libs" as container #palegreen;line:green;line.bold;text:darkgreen {
+    folder "Mounted skill directory" as skilldir #lightcyan;line:teal;text:teal {
+      file "SKILL.md" as skillmd
+      file "EXAMPLES.md" as examples
+      artifact "scripts/checker.py" as script
+    }
+    component "bash / text editor\n(code_execution tool)" as bash #lightgreen;line:green;text:darkgreen
+  }
+}
+
+user --> claude : 1. request + skill_id\n(container_id to reuse)
+storage --> skilldir : 2. mount skill files\n(infrastructure, no tool call)
+claude --> bash : 3. read SKILL.md / EXAMPLES.md\n4. run scripts
+bash --> skillmd
+bash --> examples
+bash --> script
+bash --> claude : stdout / stderr
+claude --> user : 5. final answer
+
+note bottom of container
+  Only metadata is in the prompt up front.
+  Files enter context only when Claude reads them;
+  script source never does, only its output.
+end note
+@enduml

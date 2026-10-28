@@ -1,0 +1,29 @@
+@startuml t12-openai-skills
+!pragma layout smetana
+title OpenAI Agent Skills: Deployment
+skinparam shadowing false
+
+actor "Client App" as user #aliceblue;line:blue;text:blue
+
+cloud "OpenAI Infrastructure" as openai #lavender;line:purple;line.bold;text:purple {
+  node "OpenAI Model\n(Responses API)" as model #lightyellow;line:orange;text:darkorange
+  frame "VPC / hosted container\n(container_auto)" as vpc #palegreen;line:green;line.bold;text:darkgreen {
+    component "Shell tool" as shell #lightgreen;line:green;text:darkgreen
+    folder "Loaded skills\n(skill_id + version)" as skills #lightcyan;line:teal;text:teal {
+      file "SKILL.md" as skillmd
+      artifact "scripts/" as scripts
+    }
+  }
+}
+
+user --> model : input + tools[shell]\nenvironment.skills
+model --> shell : shell commands
+shell --> skills : read / execute
+shell --> model : command output
+model --> user : final answer
+
+note bottom of vpc
+  Skills are mounted into the container
+  filesystem, not injected into context.
+end note
+@enduml

@@ -1,0 +1,40 @@
+@startuml t12-custom-agent-request-flow
+title Custom Agent Request Flow with Skills
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "User" as user #aliceblue
+participant "Application" as app #lightblue
+participant "Orchestration Model" as model #lightyellow
+
+== Initialization ==
+user -> app : sends request
+app -> app : load_skills → build XML system prompt
+app -> model : chat.completions.create(system + user)
+
+== Skill Discovery ==
+model --> app : tool_call: read_skill(/sample/SKILL.md)
+app -> model : tool_response: SKILL.md content
+
+== Load Additional Resources ==
+par parallel read_resource calls
+  model --> app : tool_call: read_resource(/sample/scripts/convert.py)
+  app -> model : tool_response: convert.py content
+else
+  model --> app : tool_call: read_resource(/sample/references/REFERENCE.md)
+  app -> model : tool_response: REFERENCE.md content
+end
+
+== Code Execution ==
+model --> app : tool_call: execute_code(/sample/scripts/convert.py)
+app -> model : tool_response: execution output / stdout
+
+== Final Response ==
+model --> app : finish_reason=stop
+app --> user : final answer
+
+note over app, model #lightcyan
+  Each level loads only when needed:
+  metadata → SKILL.md → resources/scripts.
+end note
+@enduml
