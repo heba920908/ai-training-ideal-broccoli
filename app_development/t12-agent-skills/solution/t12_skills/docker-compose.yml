@@ -1,0 +1,27 @@
+services:
+  python-interpreter:
+    image: docker.io/khshanovskyi/python-code-interpreter-mcp-server@sha256:838e2a0ace5e3167d70389e32c68d850df34e4c1a55fc2102eeb0eedf94e8a42
+    ports:
+      - "127.0.0.1:${T12_MCP_PORT:-8050}:8000"
+    user: "1000:1000"
+    read_only: true
+    command: ["sh", "-c", "cp -r /app/interpreter /sandbox/interpreter && exec python /sandbox/interpreter/server.py"]
+    tmpfs:
+      - /tmp:rw,size=256m,mode=1777
+      - /sandbox:rw,size=512m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    cpus: 1.0
+    pids_limit: 256
+    environment:
+      LOG_LEVEL: WARNING
+      HOME: /tmp
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    networks: [sandbox]
+    restart: "no"
+
+networks:
+  sandbox:
+    internal: true

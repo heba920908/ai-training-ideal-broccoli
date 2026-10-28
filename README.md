@@ -78,7 +78,7 @@ there. See each exercise README for details.
 | T9  | MCP fundamentals        | [app_development/t9-mcp-fundamentals](app_development/t9-mcp-fundamentals/README.md) | Completed   |
 | T10 | MCP advanced            | [app_development/t10-mcp-advanced](app_development/t10-mcp-advanced/README.md) | Completed   |
 | T11 | MCP auth                | [app_development/t11-mcp-auth](app_development/t11-mcp-auth/README.md) | Implemented; OAuth acceptance pending |
-| T12 | Skills                  | n/a                          | Not started |
+| T12 | Skills                  | [app_development/t12-agent-skills](app_development/t12-agent-skills/README.md) | Custom DIAL verified; managed runs deferred |
 | T13 | Final task              | n/a                          | Not started |
 
 ## Security
