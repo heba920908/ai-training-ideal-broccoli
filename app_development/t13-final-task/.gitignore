@@ -1,0 +1,8 @@
+solution/.venv/
+solution/output/
+solution/**/output/
+solution/**/__pycache__/
+solution/.pytest_cache/
+solution/.ruff_cache/
+solution/**/.pytest_cache/
+solution/**/.ruff_cache/

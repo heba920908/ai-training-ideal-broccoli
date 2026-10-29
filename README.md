@@ -79,7 +79,7 @@ there. See each exercise README for details.
 | T10 | MCP advanced            | [app_development/t10-mcp-advanced](app_development/t10-mcp-advanced/README.md) | Completed   |
 | T11 | MCP auth                | [app_development/t11-mcp-auth](app_development/t11-mcp-auth/README.md) | Closed; remaining OAuth live checks waived |
 | T12 | Skills                  | [app_development/t12-agent-skills](app_development/t12-agent-skills/README.md) | Closed; custom DIAL verified, managed live checks waived |
-| T13 | Final task              | n/a                          | Not started |
+| T13 | Final task              | [app_development/t13-final-task](app_development/t13-final-task/README.md) | Completed   |
 
 ## Security
 

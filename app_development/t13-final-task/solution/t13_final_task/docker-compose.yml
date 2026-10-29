@@ -1,0 +1,64 @@
+name: ai-training-t13
+
+services:
+  userservice:
+    image: docker.io/khshanovskyi/mockuserservice@sha256:583e4970df309a2daa2c4b590b62ad7dfb08a3b56bffd6f13b6df1611d3558ca
+    ports:
+      - "127.0.0.1:8041:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GENERATE_USERS=true
+      - USER_COUNT=1000
+    volumes:
+      - ums-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ums-mcp-server:
+    depends_on:
+      - userservice
+    image: docker.io/khshanovskyi/ums-mcp-server@sha256:629bbe7201ba5ff84581496c4f24e56a1ed9325d9194d93d82a8893a75cfc76d
+    ports:
+      - "127.0.0.1:8005:8005"
+    environment:
+      - USERS_MANAGEMENT_SERVICE_URL=http://userservice:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8005/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis-ums:
+    image: docker.io/library/redis@sha256:d16417b0a64f3a5d2acc1d5e1657e1bc8faec68d5f8c45b82fa87e81da6bbe9f
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --maxmemory 2000mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+      --save 300 10
+      --save 900 100
+      --appendonly yes
+      --appendfsync everysec
+      --loglevel warning
+
+  redis-insight:
+    profiles: ["insight"]
+    image: docker.io/redislabs/redisinsight@sha256:0131987fd5fefe3828ed33666f9742bd071b729f5a95cf923c593c14a8995c2c
+    ports:
+      - "127.0.0.1:6380:5540"
+
+volumes:
+  ums-data:
+  redis-data:
