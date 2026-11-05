@@ -1,0 +1,2022 @@
+<!doctype html>
+<html lang="en">
+
+ <script>
+         const stages = [
+        {
+            name: "Introduction",
+            dot: "rgba(110,231,255,.25)",
+            notes: 
+        `
+        Introduction for Solution Architect: LLM — New Rules of the Game
+        <br><br>
+        It's better to see once than to look at a hundred slides. <m>This interactive visualization</m> is a compact guide to LLM architecture for Solution Architects.  
+        It shows the full cycle of how a language model works: from training and prompt creation to generating a response (but in simplified form).
+        <br><br>
+        Here are just some challenges in the world of LLM that Solution Architect must consider:
+        <ul>
+        <li>Non-determinism and hallucinations. Forget "input X — always output Y." Now it's  
+        "input X — most likely output Y, but sometimes Z, and on Fridays, something else entirely." 
+        The model can confidently give a beautiful, logical, and completely incorrect answer. Human-in-the-loop is not a luxury but a necessity.</li>
+
+        <li>Both input and output data cost money. Input is cheaper, output is more expensive. 
+            Plan the response format in advance, or the budget will run out before the quarter ends.</li>
+
+        <li>"Black box." The model generates a response, but explaining "why exactly this way" is a non-trivial task. 
+        You need to include interpretation techniques in the architecture in advance, or the client won't trust the result.</li>
+        </ul>
+        If you used to debug deterministic systems, welcome to a world where "it works on my machine" now sounds like "last time, the answer was good."
+        <br><br>
+        <m1>The main</m1> and <e1>additional</e1> terms are highlighted in color.
+        `,
+        links: [
+            {
+                text: "Deep Dive into LLMs like ChatGPT (Andrej Karpathy)",
+                url: "https://www.youtube.com/watch?v=7xTGNNLPyMI"
+            },
+            {
+                text: "[1hr Talk] Intro to Large Language Models",
+                url: "https://www.youtube.com/watch?v=zjkBMFhNj_g"
+            },
+            {
+                text: "The Big LLM Architecture Comparison (Sebastian Raschka)",
+                url: "https://sebastianraschka.com/blog/2025/the-big-llm-architecture-comparison.html"
+            },
+            {
+                text: "State of GPT @ Microsoft Build 2023",
+                url: "https://www.youtube.com/watch?v=bZQun8Y4L2A"
+            }
+        ]
+        },
+
+          { 
+            name: "Model training", 
+            focus: {x:60,y:90,w:220,h:90}, 
+            dot: "rgba(110,231,255,.25)",
+            notes: 
+        `
+        Before using an LLM for inference, <m>the model must be trained</m>. This is a separate, resource-intensive process that happens once.
+        There are at least 2 steps. 
+        <e>Pre-training</e> involves training on massive datasets (terabytes of text) 
+        to learn language patterns, facts, and reasoning capabilities. This phase can take weeks or months on specialized hardware.
+        <e>Fine-tuning</e> adapts the pre-trained model to specific tasks or 
+        domains using smaller, curated datasets based on feedback from human users.
+        <br><br>
+        After training, the model weights are frozen and used for inference (the stages shown below). The model's knowledge is not up-to-date
+        (approximately six months to a year) at the time of using the model. 
+        Various techniques such as <m>RAG</m> (Retrieval Augmented Generation) 
+        allow expanding the model's basic knowledge with the necessary information.
+        <br><br>
+        There are multi-modal models that can process not only text, but also images, audio, video, etc.
+        <br><br>
+        Another idea is called <e>distillation</e>.
+        Distillation is a training method where a smaller model learns to imitate a larger, more capable model to achieve similar 
+        performance with lower cost and faster inference. Also you can read about techniques like <e>LoRA</e> (Low-Rank Adaptation)
+        and <e>Quantization</e> for more details.
+        `
+        },
+          { 
+            name: "Input data", 
+            focus: {x:60,y:190,w:220,h:190}, 
+            dot: "rgba(110,231,255,.25)",
+            notes: 
+        `
+        The input to the LLM consists of two main components:   
+        <m>Instructions</m> define the behavior of the model: system rules, style, format, and constraints.
+        <m>Data</m> provides the context: documents, messages, facts, examples, images etc.
+        <br><br>
+        The model <m>does not have memory</m> and does not store state. 
+        Each call is not connected to previous calls. 
+        If it is necessary to save data received in previous calls (for example, dialogue history), 
+        this data must also be written in the prompt and passed as input for the new step.
+        <br><br>
+        The instruction can also include a description of <m>tools or functions</m> 
+        (function call format and their parameters). 
+        Many models can "call" functions. Of course, in reality, no actual function call happens; the model simply generates text (or json) containing 
+        the call instruction and parameters. The actual call is made by an external application.
+        <br><br>
+        Although the model is trained to follow instructions as accurately as possible, <m>it cannot be 
+        fully trusted to follow the instructions exactly</m>.
+        This means, for example, that security restrictions on data output cannot be written in the instructions. Any checks for data availability
+         and privileges must be performed in the application itself.
+        `
+          },
+          { 
+            name: "Prompt assembly", 
+            focus: {x:320,y:165,w:240,h:190}, 
+            dot: "rgba(110,231,255,.25)",
+            notes: 
+        `
+        Instructions and data are combined into <m>a single prompt</m>. 
+        This means that we cannot completely separate instructions and data, and in some cases, 
+        data can be perceived by the model as instructions. This is called <m>prompt injection</m> and 
+        is a big problem for the security of LLM systems.
+        <br><br>
+        The prompt should contain <m>clear and understandable instructions</m> and be properly formatted. 
+        Data is better highlighted with XML tags. 
+        The best result is achieved if you follow the instructions of the model manufacturers and use the same format that was used for 
+        training the models. Some models require a special prompt format. The prompt format can vary significantly for different models.
+        For some models, the prompt must contain different blocks (system, role). Images are transmitted as base64.
+        <br><br>
+        Writing a correct and structured prompt is part of <m>prompt engineering</m>
+        and an important task for improving system quality. It is important to provide not only direct instructions and rules but also 
+        help the model "think" (for example, using <m>SGR (Schema-Guided Reasoning)</m>). Additionally, it is important to 
+        give the model the ability to say "no" and 
+        point out data errors. A bad prompt significantly increases model <m>hallucinations</m> 
+        (generation of a beautiful but completely 
+        incorrect answer).
+        The quality of the response significantly improves if one or more examples of data and expected answers are included in the prompt
+        (<m>one-shot prompting</m> or <m>few-shot prompting</m>).
+        There are many techniques for <m>prompt engineering</m>. 
+        <br><br>
+        The quality of the prompt can only be tested using bulk queries on a <m>GDS (golden data set)</m>. Creating and using GDS is a separate challenge. 
+        Comparing two numbers or strings is not very difficult (even considering typos), but comparing two texts and making sure the answer is correct, incorrect, 
+        or incomplete is a complex task that requires a special approach.
+        `,
+        links: [
+            {
+                text: "Prompt Engineering Guide",
+                url: "https://www.promptingguide.ai/"
+            },
+            {
+                text: "Schema-Guided Reasoning (Rinat Abdullin)",
+                url: "https://abdullin.com/schema-guided-reasoning/"
+            },
+            {
+                text: "Structured Output (Rinat Abdullin)",
+                url: "https://abdullin.com/structured-output/"
+            },
+            {
+                text: "Adversarial Attacks on LLMs (Lilian Weng)",
+                url: "https://lilianweng.github.io/posts/2023-10-25-adv-attack-llm/"
+            },
+            {
+                text: "PARSE: Schema Optimization for Entity Extraction (Up to 64.7% improvement)",
+                url: "https://arxiv.org/pdf/2510.08623"
+            },
+            {
+                text: "Qwen2.5 for Electronic Health Records (EHR) (93.4% coverage with 93.0% exact-match accuracy)",
+                url: "https://arxiv.org/pdf/2510.21027"
+            }
+            
+        ]
+          },
+          { 
+            name: "Vectorization", 
+            focus: {x:620,y:180,w:200,h:120}, 
+            dot: "rgba(167,139,250,.22)",
+            notes: 
+        `
+        The input string (prompt) is split into <m>tokens</m>
+        (one word can be represented by 1-4 tokens depending on the language). 
+        Punctuation marks, numbers, and other symbols are also translated into tokens.
+        Then each token is converted into a vector (<m>embedding</m>)
+        that captures semantic meaning in high-dimensional space.
+        The model requires a method to convert tokens into vectors. For this, special models called 
+        <m>embeddings</m> are used.
+        There are special embeddings for text, images, audio, video, etc. 
+        It is important to understand what <m>data the embedding model was trained on</m>. 
+        Depending on this, the embeddings will support different languages, special terms etc.
+        <br><br>
+        Although it is obvious, it is important to remember that different embedding models create different vectors, which is important if embeddings 
+        are cached and a change in the vectorization model is required. Embeddings are calculated as 
+        <m>floating-point numbers</m> and even with the same model may 
+        slightly differ when computed (specifically on a GPU), which can make their caching with standard methods more difficult.
+        <br><br>
+        <m>The model has no memory</m>, the input of the model is only a sequence of tokens.
+        The model can work with a limited token size (<m>context window</m>). It can be 100K or even 1-2M tokens. 
+        But the model works effectively only 
+        with part of the context window. The more input data, the worse the quality of the response will be. The model's attention gets lost 
+        (just like a human's attention gets lost when reading a long text). Processing data that does not fully fit into context windows is one of the 
+        tasks of LLM application architecture.
+        It's an important part of <m>context engineering</m>.
+        <br><br>
+        Both input and output tokens <m>cost money</m>. Output tokens are significantly more expensive, 
+        so it is necessary to plan in advance the minimally sufficient format of output data. 
+        Different <m>prompt optimization techniques</m> can be used to reduce the cost of output data.
+        `,
+        links: [
+            {
+                text: "OpenAI: Learn about language model tokenization",
+                url: "https://platform.openai.com/tokenizer"
+            },
+            {
+                text: "Tokenizer From Scratch (Sebastian Raschka)",
+                url: "https://sebastianraschka.com/blog/2025/bpe-from-scratch.html"
+            },
+            {
+                text: "Small Language Models with Guided Decoding (10-20x reduction in inference costs)",
+                url: "https://arxiv.org/abs/2510.03847"
+            }
+
+        ]
+          },
+          { 
+            name: "Through many layers", 
+            focus: {x:870,y:100,w:300,h:270}, 
+            dot: "rgba(52,211,153,.18)",
+            notes: `
+            <e>Transformer layers</e> are the building blocks of the model. 
+            They take the input and transform it step by step, so that each word (or token) gets a representation that takes 
+            into account the surrounding words.
+            <e>Attention</e> is a part of those layers that lets the model 
+            decide which other words in the input are most important for understanding a given word. It's like focusing on the parts 
+            of the sentence that matter most for meaning.
+            Training a large model like this from scratch takes a huge amount of computing power and time, 
+            so in most cases people start with a <e>pre-trained model</e> 
+            that's already been trained on lots of data and then adapt it to their needs.
+            <br><br>
+            Complex architecture with billions of parameters requires huge computational resources. If such resources are not available, 
+            special providers are used. As a result, there is a feeling of a <m>"black box"</m> - 
+            the model generates an answer, but it is difficult to 
+            understand how exactly it was obtained.
+            <br><br>
+            A partially computed part of the prompt can be cached in a special <m>prompt cache</m>, 
+            which significantly speeds up the process. Cached tokens are often cheaper. Therefore, it is better to place the unchangeable 
+            part of the prompt at the beginning, and the changeable part (data, date, etc.) after the static part. 
+            This allows at least part of the prompt to be cached.
+            `,
+            links: [
+                {
+                text: "Attention Is All You Need (Vaswani et al., 2017)",
+                url: "https://arxiv.org/abs/1706.03762"
+                },
+                {
+                    text: "The Illustrated Transformer (Jay Alammar)",
+                    url: "https://jalammar.github.io/illustrated-transformer/"
+                },
+                {
+                    text: "The Illustrated GPT-2 (Jay Alammar)",
+                    url: "https://jalammar.github.io/illustrated-gpt2/"
+                },
+                {
+                    text: "Attention Mechanism of Large Language Models From Scratch (Sebastian Raschka)",
+                    url: "https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html"
+                },
+                {
+                    text: "How to open the black box of LLMs",
+                    url: "https://www.linkedin.com/pulse/how-open-black-box-llms-pavel-agurov-tchff/"
+                }
+            ]
+          },
+          { 
+            name: "Probabilities and selection", 
+            focus: {x:1210,y:120,w:270,h:220}, 
+            dot: "rgba(251,191,36,.20)",
+            notes: `
+            The model produces logits, which are <e>raw scores</e> for each possible next token;
+            these scores are converted into a <e>probability distribution</e> using a function 
+            like softmax. The next token is then chosen based on these probabilities.
+            <br><br>
+            Because the model's output at each step is based on <m>probabilities</m> rather 
+            than a deterministic rule, different outputs are possible even for the same input, especially when non-zero
+            temperature parameter is used.
+            <m>Temperature</m> means a setting that changes how random or predictable the model's output 
+            is by scaling the predicted probabilities before choosing the next token. 
+            Lower temperature makes the model more likely to pick the highest - probability tokens (more predictable and focused), 
+            while higher temperature makes choices more varied and creative by giving lower-probability tokens a better chance.
+            For new reasoning models, there are other control parameters.
+
+            <br><br>
+            This probabilistic nature comes from how the model is trained and how it generates text: it learns statistical 
+            patterns from data and predicts likely continuations, not exact "true" answers by algorithmic calculation. 
+            That means the model can produce <m>confident but incorrect responses</m>, 
+            called <m>hallucinations</m>.
+
+            <br><br>
+            For many models, it is possible to specify a <m>structured output scheme</m>. 
+            This means that the model selects the most likely token, but only from those that match the specified data scheme. 
+            The data scheme can be created using libraries like <m>pydantic</m>.
+            `,
+            links: [
+                {
+                    text: "Structured model outputs",
+                    url: "https://platform.openai.com/docs/guides/structured-outputs"
+                },
+                {
+                    text: "pydantic",
+                    url: "https://docs.pydantic.dev/"
+                },
+                {
+                    text: "AI Hallucination",
+                    url: "https://www.datacamp.com/blog/ai-hallucination"
+                }
+
+            ]
+                
+
+          },
+          { 
+            name: "Output", 
+            focus: {x:1210,y:350,w:270,h:90}, 
+            dot: "rgba(110,231,255,.25)",
+            notes: `
+            Selected tokens are decoded back into text to form the final generated answer. 
+            This process repeats <m>token-by-token</m> (the shown scheme is simplified).
+            Multi-modal models can generate not only text, but also images, audio, video, etc.
+            <br><br>
+            It is not recommended to fully trust the obtained results. 
+            <m1>Always double-check the result</m1> using all available methods 
+            (for example, static code validators and linters or checking names and terms by a data dictionary). 
+            Always include human verification (<m>HITL = human in the loop</m>) where possible.
+            If the answer is incorrect, the identified error can be added to the original prompt and the request can be executed again, providing the model 
+            with more context about possible issues. Alternatively, additional examples of input and expected output can be 
+            added to the prompt.
+            <br><br>
+            <m>The size of output data is limited</m>
+            (and usually significantly smaller than the allowable size of input data). 
+            Often the only possible option is to use separate tools (functions) or generate code that will process the data, 
+            rather than generating a complete answer using the model.
+            <br><br>
+            <m>Streaming</m> is a mode where the language model gives an answer gradually, token by token, instead of all 
+            at once at the end. This mode looks more user-friendly because the answer appears faster and there is 
+            no long waiting time, but editing the final output is harder and it is harder to handle errors 
+            during generation.
+            <br><br>
+            New <m>reasoning models</m> have the ability to "thinking" step by step. This significantly increases the model's 
+            capabilities but takes time and costs additional tokens.
+            `,
+            links: [
+            {
+                text: "Streaming API responses (OpenAI)",
+                url: "https://platform.openai.com/docs/guides/streaming"
+            },
+            {
+                text: "Reasoning Models (OpenAI)",
+                url: "https://platform.openai.com/docs/guides/reasoning"
+            },
+            {
+                text: "Understanding Reasoning LLMs: Methods and Strategies (Sebastian Raschka)",
+                url: "https://sebastianraschka.com/blog/2025/understanding-reasoning-llms.html"
+            },
+            {
+                text: "Understanding Multimodal LLMs (Sebastian Raschka)",
+                url: "https://sebastianraschka.com/blog/2024/understanding-multimodal-llms.html"
+            }
+          ]
+          },
+        ];   
+ </script>
+
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>LLM Architecture (High Level) — standalone animation</title>
+    <style>
+      :root{
+        --bg0:#070A12;
+        --bg1:#0B1020;
+        --panel:#0E1630;
+        --panel2:#0B142B;
+        --text:#EAF0FF;
+        --muted:#A7B4D8;
+        --line:#2B3A6A;
+        --accent:#6EE7FF;
+        --accent2:#A78BFA;
+        --good:#34D399;
+        --warn:#FBBF24;
+        --bad:#FB7185;
+        --shadow: 0 18px 50px rgba(0,0,0,.45);
+        --radius: 18px;
+        --stage-notes-height: 370px;
+        --marked:#FBBF24;
+        --extra:#6EE7FF;
+      }
+      m{
+        color:var(--warn);
+        font-weight:700;
+      }
+      e{
+        color:var(--extra);
+        font-weight:700;
+      }
+      m1{
+        color:var(--warn);
+        font-weight:700;
+      }
+      e1{
+        color:var(--extra);
+        font-weight:700;
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%}
+      body{
+        margin:0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+        background:
+          radial-gradient(1200px 700px at 15% 10%, rgba(110,231,255,.12), transparent 60%),
+          radial-gradient(1000px 700px at 80% 30%, rgba(167,139,250,.10), transparent 65%),
+          radial-gradient(900px 600px at 50% 90%, rgba(52,211,153,.07), transparent 60%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        color:var(--text);
+      }
+      .wrap{
+        max-width:1200px;
+        margin:0 auto;
+        padding:24px 18px 28px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+      }
+      header{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:16px;
+      }
+      header .right-section{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+      .title{
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      }
+      .title h1{
+        margin:0;
+        font-size:18px;
+        font-weight:650;
+        letter-spacing:.2px;
+      }
+      .title p{
+        margin:0;
+        color:var(--muted);
+        font-size:13px;
+        line-height:1.35;
+        max-width:78ch;
+      }
+      .controls{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+      .index-btn{
+        width:34px;
+        height:34px;
+        min-width:34px;
+        border-radius:999px;
+        padding:0;
+        font-size:15px;
+        font-weight:700;
+        line-height:1;
+      }
+      .index-btn i{
+        font-style:normal;
+      }
+      .search-btn{
+        width:34px;
+        height:34px;
+        min-width:34px;
+        border-radius:999px;
+        padding:0;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .search-btn svg{
+        width:16px;
+        height:16px;
+        fill:rgba(234,240,255,.95);
+      }
+      button{
+        border:1px solid rgba(255,255,255,.10);
+        background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+        color:var(--text);
+        border-radius:12px;
+        padding:10px 12px;
+        cursor:pointer;
+        box-shadow:0 10px 24px rgba(0,0,0,.25);
+        font-size:13px;
+      }
+      button:hover{border-color:rgba(110,231,255,.35)}
+      button:active{transform:translateY(1px)}
+      .toggle{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 12px;
+        border:1px solid rgba(255,255,255,.10);
+        border-radius:12px;
+        background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+        user-select:none;
+        font-size:13px;
+        color:var(--muted);
+      }
+      .toggle input{accent-color: var(--accent)}
+      .card{
+        background:linear-gradient(180deg, rgba(14,22,48,.85), rgba(11,20,43,.72));
+        border:1px solid rgba(255,255,255,.08);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow:hidden;
+      }
+      .stage{
+        display:flex;
+        gap:12px;
+        align-items:center;
+        padding:14px 14px 0;
+        color:var(--muted);
+        font-size:16px;
+      }
+      .stage .dot{
+        width:10px;height:10px;border-radius:999px;
+        background: rgba(110,231,255,.25);
+        box-shadow: 0 0 0 3px rgba(110,231,255,.10);
+      }
+      .stage strong{color:var(--text); font-weight:650}
+      .legend{
+        padding: 10px 14px 14px;
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px 16px;
+        align-items:center;
+        color:var(--muted);
+        font-size:12px;
+      }
+      .pill{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+      }
+      .sw{
+        width:10px;height:10px;border-radius:999px;
+        display:inline-block;
+      }
+      .sw.a{background:var(--accent)}
+      .sw.b{background:var(--accent2)}
+      .sw.g{background:var(--good)}
+      .sw.w{background:var(--warn)}
+      .sw.r{background:var(--bad)}
+      .hint{
+        padding:12px 14px 16px;
+        border-top:1px solid rgba(255,255,255,.08);
+        color:var(--muted);
+        font-size:12px;
+        line-height:1.45;
+      }
+      .stage-notes{
+        position:relative;
+        padding:0;
+        display:block;
+        color:var(--muted);
+        font-size:14px;
+        line-height:1.5;
+        background:rgba(251,191,36,.08);
+        border-left:3px solid var(--warn);
+        margin:10px 14px 0;
+        border-radius:8px;
+        height:var(--stage-notes-height);
+        min-height:var(--stage-notes-height);
+        max-height:var(--stage-notes-height);
+      }
+      .stage-notes .icon{
+        flex-shrink:0;
+        width:16px;
+        height:16px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:700;
+        color:var(--warn);
+        font-size:13px;
+      }
+      .notes-flip{
+        height:100%;
+      }
+      .notes-flip-inner{
+        position:relative;
+        width:100%;
+        height:100%;
+      }
+      .notes-face{
+        position:absolute;
+        inset:0;
+        display:flex;
+        gap:8px;
+        align-items:flex-start;
+        padding:8px 14px 8px 14px;
+        backface-visibility:hidden;
+        -webkit-backface-visibility:hidden;
+        pointer-events:auto;
+      }
+      .notes-back{
+        display:none;
+        pointer-events:none;
+      }
+      .stage-notes.is-flipped .notes-back{
+        display:flex;
+        pointer-events:auto;
+      }
+      .stage-notes.is-flipped .notes-front{
+        display:none;
+        pointer-events:none;
+      }
+      /* Flip button (taken from 04. genai-check-list.html, adapted to dark theme) */
+      .stage-notes .flip-button{
+        position:absolute;
+        top:8px;
+        right:10px;
+        z-index:3;
+        background:none;
+        border:none;
+        cursor:pointer;
+        padding:4px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:8px;
+        transition: background-color 0.2s ease;
+        color:inherit;
+      }
+      .stage-notes .flip-button:hover{
+        background-color: rgba(255,255,255,.06);
+      }
+      .stage-notes .flip-button svg{
+        width:18px;
+        height:18px;
+        fill: var(--muted);
+        transition: fill 0.2s ease;
+      }
+      .stage-notes .flip-button:hover svg{
+        fill: var(--text);
+      }
+      .stage-notes #stageNotesText{
+        overflow-y:auto;
+        flex:1;
+        min-height:0; /* critical for flex overflow scrolling */
+        min-width:0;
+        -webkit-overflow-scrolling: touch;
+        word-wrap:break-word;
+        overflow-wrap:break-word;
+        padding-right:40px; /* keep text away from the button */
+      }
+      .stage-notes #stageLinks{
+        overflow-y:auto;
+        flex:1;
+        min-height:0;
+        min-width:0;
+        -webkit-overflow-scrolling: touch;
+        padding-right:40px; /* keep links away from the button */
+      }
+      .stage-notes .links-title{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        font-weight:650;
+        color:rgba(234,240,255,.95);
+        margin:0 0 8px 0;
+      }
+      .stage-notes .links-title .links-dot{
+        width:8px;height:8px;border-radius:999px;
+        background:rgba(110,231,255,.55);
+        box-shadow:0 0 0 3px rgba(110,231,255,.12);
+      }
+      .stage-notes .links-list{
+        margin:0;
+        padding-left:18px;
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      }
+      .stage-notes .links-list a{
+        color:rgba(110,231,255,.92);
+        text-decoration:none;
+        border-bottom:1px solid rgba(110,231,255,.18);
+        padding-bottom:1px;
+      }
+      .stage-notes .links-list a:hover{
+        color:rgba(110,231,255,1);
+        border-bottom-color:rgba(110,231,255,.45);
+      }
+      @media (max-width: 768px) {
+        .stage-notes{
+          /* Adaptive height for phones: comfortable, but not huge */
+          height:clamp(180px, 34vh, 260px);
+          min-height:clamp(180px, 34vh, 260px);
+          max-height:clamp(180px, 34vh, 260px);
+          font-size:10px;
+          padding:0;
+          margin:10px 10px 0 10px;
+          line-height:1.4;
+          order:3;
+          overflow:hidden; /* contain text, enable inner scroll */
+        }
+        .stage-notes #stageNotesText{
+          height:100%;
+          max-height:100%;
+          overflow:auto;
+        }
+        .stage-notes #stageLinks{
+          height:100%;
+          max-height:100%;
+          overflow:auto;
+        }
+        .notes-face{
+          padding:6px 10px 6px 10px;
+        }
+        .stage-notes .flip-button{
+          top:6px;
+          right:8px;
+          border-radius:7px;
+        }
+      }
+      .copyright{
+        color:var(--muted);
+        font-size:11px;
+        font-weight:500;
+        letter-spacing:0.3px;
+        padding:6px 12px;
+        background:linear-gradient(135deg, rgba(110,231,255,.08), rgba(167,139,250,.06));
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:10px;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        box-shadow:0 4px 12px rgba(0,0,0,.15);
+        backdrop-filter:blur(8px);
+      }
+      .copyright::before{
+        content:"©";
+        font-size:13px;
+        font-weight:700;
+        color:var(--accent);
+      }
+      .index-modal{
+        position:fixed;
+        inset:0;
+        display:none;
+        z-index:30;
+      }
+      .index-modal.is-open{
+        display:block;
+      }
+      .index-modal .overlay{
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,.55);
+        backdrop-filter:blur(2px);
+      }
+      .index-modal .panel{
+        position:relative;
+        margin:42px auto;
+        width:min(920px, calc(100vw - 24px));
+        max-height:calc(100vh - 84px);
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        background:linear-gradient(180deg, rgba(14,22,48,.96), rgba(11,20,43,.96));
+        border:1px solid rgba(255,255,255,.10);
+        border-radius:16px;
+        box-shadow: var(--shadow);
+      }
+      .index-modal-header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:12px 14px;
+        border-bottom:1px solid rgba(255,255,255,.08);
+      }
+      .index-modal-title{
+        margin:0;
+        font-size:14px;
+        font-weight:650;
+        letter-spacing:.2px;
+      }
+      .index-close{
+        width:32px;
+        height:32px;
+        min-width:32px;
+        border-radius:10px;
+        padding:0;
+      }
+      .index-modal-body{
+        padding:8px 10px 12px;
+        overflow:auto;
+      }
+      .index-search-wrap{
+        padding:10px 10px 0;
+      }
+      .index-search{
+        width:100%;
+        border:1px solid rgba(255,255,255,.14);
+        border-radius:10px;
+        background:rgba(255,255,255,.04);
+        color:var(--text);
+        font-size:13px;
+        padding:8px 10px;
+        outline:none;
+      }
+      .index-search::placeholder{
+        color:rgba(167,180,216,.85);
+      }
+      .index-search:focus{
+        border-color:rgba(110,231,255,.50);
+        box-shadow:0 0 0 2px rgba(110,231,255,.16);
+      }
+      .index-empty{
+        color:var(--muted);
+        font-size:13px;
+        padding:8px;
+      }
+      .index-list{
+        list-style:none;
+        margin:0;
+        padding:0;
+        display:flex;
+        flex-direction:column;
+        gap:6px;
+      }
+      .index-item{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:10px;
+        padding:6px 8px;
+        background:rgba(255,255,255,.02);
+      }
+      .index-term{
+        font-size:12px;
+        font-weight:650;
+        color:rgba(234,240,255,.95);
+        margin:0;
+        white-space:nowrap;
+      }
+      .index-term.is-main{
+        color:var(--warn);
+      }
+      .index-term.is-extra{
+        color:var(--accent);
+      }
+      .index-stage-links{
+        display:flex;
+        gap:6px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+      .index-stage-link{
+        border:1px solid rgba(110,231,255,.25);
+        border-radius:999px;
+        padding:3px 7px;
+        font-size:11px;
+        color:rgba(110,231,255,.96);
+        text-decoration:none;
+        background:rgba(110,231,255,.08);
+      }
+      .index-stage-link:hover{
+        border-color:rgba(110,231,255,.48);
+        background:rgba(110,231,255,.15);
+      }
+      .notes-search-list{
+        list-style:none;
+        margin:0;
+        padding:0;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+      }
+      .notes-search-item{
+        border:1px solid rgba(255,255,255,.08);
+        border-radius:10px;
+        background:rgba(255,255,255,.02);
+      }
+      .notes-search-link{
+        display:block;
+        text-decoration:none;
+        color:inherit;
+        padding:8px 10px;
+      }
+      .notes-search-link:hover{
+        background:rgba(110,231,255,.08);
+      }
+      .notes-search-stage{
+        margin:0 0 4px 0;
+        font-size:13px;
+        font-weight:650;
+        color:rgba(110,231,255,.96);
+      }
+      .notes-search-snippet{
+        margin:0;
+        font-size:12px;
+        color:var(--muted);
+        line-height:1.35;
+      }
+      search_part{
+        background:rgba(251,191,36,.30);
+        color:rgba(255,224,130,.98);
+        border-radius:4px;
+        padding:0 2px;
+      }
+      @media (max-width: 768px) {
+        .index-item{
+          flex-wrap:wrap;
+        }
+        .index-term{
+          white-space:normal;
+        }
+        .index-stage-links{
+          width:100%;
+          justify-content:flex-start;
+        }
+      }
+      svg{display:block; width:100%; height:auto}
+      /* Clickable diagram blocks (stage navigation) */
+      #llmDiagram { cursor: default; }
+      #llmDiagram [id^="box"] { cursor: pointer; }
+      #llmDiagram [id^="box"]:hover rect { stroke: rgba(110,231,255,.55); }
+      .sr-only{
+        position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+      }
+      @media (max-width: 768px) {
+        svg{
+          max-height:100px;
+          min-height:100px;
+          height:100px !important;
+          width:100%;
+          object-fit:contain;
+          object-position:top;
+          display:block;
+          margin-bottom:15px;
+          order:2;
+        }
+        .hint{
+          font-size:10px;
+          padding:8px 10px 10px;
+          margin-top:10px;
+          line-height:1.4;
+          order:4;
+        }
+        .stage{
+          font-size:13px;
+          padding:10px 10px 0;
+          order:1;
+        }
+        .card{
+          overflow:visible;
+          display:flex;
+          flex-direction:column;
+        }
+        .wrap{
+          padding:16px 12px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <h1>LLM architecture (high level)</h1>
+        </div>
+        <div class="right-section">
+          <div class="copyright">2026 Pavel Agurov, v.03</div>
+          <div class="controls">
+            <button id="btnIndex" class="index-btn" type="button" title="Index of terms" aria-label="Open terms index">
+              <i>i</i>
+            </button>
+            <button id="btnNotesSearch" class="search-btn" type="button" title="Search in all notes" aria-label="Search in all notes">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 3a7 7 0 0 1 5.57 11.24l4.1 4.09a1 1 0 1 1-1.42 1.42l-4.09-4.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+              </svg>
+            </button>
+            <button id="btnPrev" type="button" title="Previous stage">←</button>
+            <button id="btnNext" type="button" title="Next stage">→</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="card" aria-label="LLM diagram with animation">
+        <div class="stage" aria-live="polite">
+          <span class="dot" id="stageDot"></span>
+          <div>
+            <strong id="stageText">Prompt assembly</strong>
+            <span class="sr-only" id="stageA11y"></span>
+          </div>
+        </div>
+        <div class="stage-notes" id="stageNotes" style="display: none;">
+          <button class="flip-button" id="stageNotesFlip" type="button" title="Show links" aria-label="Show links" style="display:none;">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 .79-.15 1.56-.44 2.25-.15.36-.04.77.23 1.04.51.51 1.37.33 1.64-.34.37-.84.57-1.75.57-2.95 0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-.79.15-1.56.44-2.25.15-.36.04-.77-.23-1.04-.51-.51-1.37-.33-1.64.34C4.2 9.96 4 10.87 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+            </svg>
+          </button>
+          <div class="notes-flip" id="stageNotesFlipCard">
+            <div class="notes-flip-inner" id="stageNotesFlipInner">
+              <div class="notes-face notes-front" aria-label="Notes">
+                <div id="stageNotesText"></div>
+              </div>
+              <div class="notes-face notes-back" id="stageLinks" aria-label="Links"></div>
+            </div>
+          </div>
+        </div>
+
+        <!--
+          Coordinate system: viewBox 0 60 1550 420.
+          Left: sources (Instructions, Data) -> Prompt -> Vectorization -> LLM (layers) -> probabilities -> Output.
+        -->
+        <svg id="llmDiagram" viewBox="0 60 1550 420" role="img" aria-label="LLM diagram: Instructions + Data -> Prompt -> Vectorization -> LLM layers -> probabilities -> Output">
+          <defs>
+            <linearGradient id="gPanel" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,.08)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,.03)"/>
+            </linearGradient>
+            <linearGradient id="gLLM" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="rgba(110,231,255,.10)"/>
+              <stop offset="55%" stop-color="rgba(167,139,250,.10)"/>
+              <stop offset="100%" stop-color="rgba(52,211,153,.06)"/>
+            </linearGradient>
+            <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feColorMatrix in="b" type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 .55 0" result="a"/>
+              <feMerge>
+                <feMergeNode in="a"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(110,231,255,.65)"/>
+            </marker>
+          </defs>
+
+          <!-- Background grid -->
+          <g opacity=".18">
+            <path d="M0 100 H1550 M0 200 H1550 M0 300 H1550 M0 400 H1550" stroke="rgba(255,255,255,.12)" />
+            <path d="M200 0 V490 M400 0 V490 M600 0 V490 M800 0 V490 M1000 0 V490 M1200 0 V490 M1400 0 V490" stroke="rgba(255,255,255,.08)" />
+          </g>
+
+          <!-- Flow lines -->
+          <g id="flowLines" opacity=".95">
+            <path d="M160 135 C 270 135, 275 135, 320 135" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M160 235 C 270 235, 275 235, 320 235" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M160 335 C 270 335, 275 335, 320 335" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M560 235 C 580 235, 595 235, 616 235" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M820 235 C 838 235, 852 235, 866 235" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M1170 235 C 1195 235, 1204 235, 1206 235" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+            <path d="M1480 235 C 1420 280, 1370 320, 1345 395" stroke="rgba(110,231,255,.55)" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+          </g>
+
+          <!-- Left: Model training -->
+          <g id="boxModelTraining">
+            <rect x="60" y="90" width="220" height="90" rx="18" fill="url(#gPanel)" stroke="rgba(110,231,255,.50)" stroke-width="2"/>
+            <text x="80" y="123" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Model training</text>
+            <text x="80" y="147" fill="rgba(167,180,216,.95)" font-size="12">Pre-training on large datasets</text>
+            <text x="80" y="165" fill="rgba(167,180,216,.95)" font-size="12">Fine-tuning, RLHF</text>
+          </g>
+
+          <!-- Left: Instructions -->
+          <g id="boxInstructions">
+            <rect x="60" y="190" width="220" height="90" rx="18" fill="url(#gPanel)" stroke="rgba(110,231,255,.50)" stroke-width="2"/>
+            <text x="80" y="223" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Instructions</text>
+            <text x="80" y="247" fill="rgba(167,180,216,.95)" font-size="12">System/user rules</text>
+            <text x="80" y="265" fill="rgba(167,180,216,.95)" font-size="12">Style, format, constraints</text>
+          </g>
+
+          <!-- Left: Data -->
+          <g id="boxData">
+            <rect x="60" y="290" width="220" height="90" rx="18" fill="url(#gPanel)" stroke="rgba(110,231,255,.50)" stroke-width="2"/>
+            <text x="80" y="323" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Data</text>
+            <text x="80" y="347" fill="rgba(167,180,216,.95)" font-size="12">Context, docs, messages</text>
+            <text x="80" y="365" fill="rgba(167,180,216,.95)" font-size="12">Facts, examples, requirements</text>
+          </g>
+
+          <!-- Prompt builder -->
+          <g id="boxPrompt">
+            <rect x="320" y="165" width="240" height="190" rx="18" fill="url(#gPanel)" stroke="rgba(255,255,255,.10)"/>
+            <text x="342" y="202" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Prompt</text>
+            <text x="342" y="228" fill="rgba(167,180,216,.95)" font-size="12">Instructions + &lt;data&gt;data&lt;/data&gt;</text>
+            <g opacity=".9">
+              <rect x="342" y="264" width="198" height="18" rx="9" fill="rgba(110,231,255,.10)" stroke="rgba(110,231,255,.25)"/>
+              <rect id="promptFill" x="342" y="264" width="38" height="18" rx="9" fill="rgba(110,231,255,.40)"/>
+            </g>
+          </g>
+
+          <!-- Vectorization -->
+          <g id="boxVectorization">
+            <rect x="620" y="180" width="200" height="120" rx="18" fill="url(#gPanel)" stroke="rgba(255,255,255,.10)"/>
+            <text x="642" y="210" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Vectorization</text>
+            <text x="642" y="232" fill="rgba(167,180,216,.95)" font-size="12">Tokens → Embeddings</text>
+            <text x="642" y="252" fill="rgba(167,180,216,.95)" font-size="12">Dense vector representation</text>
+            
+            <!-- Visual: tokens to vectors -->
+            <g transform="translate(642, 265)">
+              <!-- Input tokens -->
+              <g id="vecTokens">
+                <rect x="0" y="0" width="8" height="8" rx="2" fill="rgba(110,231,255,.60)"/>
+                <rect x="12" y="0" width="8" height="8" rx="2" fill="rgba(110,231,255,.50)"/>
+                <rect x="24" y="0" width="8" height="8" rx="2" fill="rgba(110,231,255,.45)"/>
+                <text x="36" y="7" fill="rgba(167,180,216,.85)" font-size="10">→</text>
+              </g>
+              <!-- Output vectors (matrix representation) -->
+              <g id="vecVectors" transform="translate(50, -4)">
+                <rect x="0" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.50)"/>
+                <rect x="6" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.45)"/>
+                <rect x="12" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.40)"/>
+                <rect x="18" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.35)"/>
+                <rect x="24" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.30)"/>
+                <rect x="30" y="0" width="4" height="16" rx="1" fill="rgba(167,139,250,.25)"/>
+              </g>
+            </g>
+          </g>
+
+          <!-- LLM -->
+          <g id="boxLLM" transform="translate(20,0)">
+            <rect x="850" y="100" width="300" height="270" rx="22" fill="url(#gLLM)" stroke="rgba(255,255,255,.12)"/>
+            <text x="872" y="134" fill="rgba(234,240,255,.98)" font-size="16" font-weight="750">LLM</text>
+            <text x="872" y="158" fill="rgba(167,180,216,.95)" font-size="12">Many Transformer layers</text>
+            
+            <!-- Mini Transformer block (diagram, not text) -->
+            <g id="txMini" transform="translate(872,172)">
+              <!-- Input embeddings (stack of tokens) -->
+              <g id="txEmbeds">
+                <rect x="0" y="10" width="52" height="54" rx="12" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.10)"/>
+                <circle cx="16" cy="26" r="4" fill="rgba(110,231,255,.65)"/>
+                <circle cx="16" cy="40" r="4" fill="rgba(110,231,255,.55)"/>
+                <circle cx="16" cy="54" r="4" fill="rgba(110,231,255,.45)"/>
+                <rect id="txEmbGlow" x="-2" y="8" width="56" height="58" rx="14" fill="transparent" stroke="rgba(110,231,255,.65)" stroke-width="2" opacity="0" filter="url(#softGlow)"/>
+              </g>
+
+              <!-- Q/K/V split -->
+              <g id="txQKV" transform="translate(60,0)">
+                <path id="txQkvLines" d="M0 37 C 12 37, 14 24, 26 22
+                                         M0 37 C 12 37, 14 37, 26 37
+                                         M0 37 C 12 37, 14 50, 26 52"
+                      fill="none" stroke="rgba(167,180,216,.50)" stroke-width="2"
+                      stroke-dasharray="5 6" stroke-dashoffset="0"/>
+                <rect x="26" y="14" width="18" height="16" rx="6" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.25)"/>
+                <rect x="26" y="29" width="18" height="16" rx="6" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.25)"/>
+                <rect x="26" y="44" width="18" height="16" rx="6" fill="rgba(167,139,250,.18)" stroke="rgba(167,139,250,.25)"/>
+                <text x="35" y="26" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(234,240,255,.92)">Q</text>
+                <text x="35" y="41" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(234,240,255,.92)">K</text>
+                <text x="35" y="56" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(234,240,255,.92)">V</text>
+              </g>
+
+              <!-- Self-attention -->
+              <g id="txAttn" transform="translate(120,10)">
+                <rect x="0" y="0" width="66" height="54" rx="12" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.10)"/>
+                <circle cx="18" cy="20" r="4" fill="rgba(167,139,250,.70)"/>
+                <circle cx="34" cy="20" r="4" fill="rgba(167,139,250,.55)"/>
+                <circle cx="50" cy="20" r="4" fill="rgba(167,139,250,.45)"/>
+                <path d="M18 36 C 26 30, 42 30, 50 36" fill="none" stroke="rgba(167,139,250,.35)" stroke-width="2"/>
+                <path d="M18 38 C 26 44, 42 44, 50 38" fill="none" stroke="rgba(167,139,250,.25)" stroke-width="2"/>
+                <rect id="txAttnGlow" x="-2" y="-2" width="70" height="58" rx="14" fill="transparent" stroke="rgba(167,139,250,.70)" stroke-width="2" opacity="0" filter="url(#softGlow)"/>
+              </g>
+
+              <!-- Residual add (⊕) -->
+              <g id="txAdd1" transform="translate(194,37)">
+                <circle cx="0" cy="0" r="10" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.10)"/>
+                <path d="M-4 0 H4 M0 -4 V4" stroke="rgba(52,211,153,.70)" stroke-width="2" stroke-linecap="round"/>
+              </g>
+
+              <!-- MLP / FFN -->
+              <g id="txMLP" transform="translate(212,10)">
+                <rect x="0" y="0" width="60" height="54" rx="12" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.10)"/>
+                <path d="M10 40 C 18 28, 26 46, 34 30 C 40 18, 50 34, 52 24" fill="none" stroke="rgba(52,211,153,.40)" stroke-width="2"/>
+                <rect x="10" y="10" width="40" height="10" rx="5" fill="rgba(52,211,153,.14)" stroke="rgba(52,211,153,.18)"/>
+                <rect id="txMlpGlow" x="-2" y="-2" width="64" height="58" rx="14" fill="transparent" stroke="rgba(52,211,153,.70)" stroke-width="2" opacity="0" filter="url(#softGlow)"/>
+              </g>
+
+              <!-- Internal flow arrow line -->
+              <path d="M52 37 H60 M104 37 H120 M186 37 H204"
+                    stroke="rgba(110,231,255,.35)" stroke-width="2" fill="none"/>
+              <path d="M272 37 H246"
+                    stroke="rgba(110,231,255,.18)" stroke-width="2" fill="none"/>
+
+              <!-- Internal particles -->
+              <g id="txMiniParticles"></g>
+            </g>
+
+            <!-- Layers -->
+            <g id="layers" transform="translate(872,194)">
+              <!-- 10 layer "bars" -->
+              <g id="layerBars">
+                <rect class="layer" x="0" y="0"   width="246" height="12" rx="6" fill="rgba(110,231,255,.14)" stroke="rgba(110,231,255,.18)"/>
+                <rect class="layer" x="0" y="18"  width="246" height="12" rx="6" fill="rgba(110,231,255,.12)" stroke="rgba(110,231,255,.18)"/>
+                <rect class="layer" x="0" y="36"  width="246" height="12" rx="6" fill="rgba(110,231,255,.10)" stroke="rgba(110,231,255,.18)"/>
+                <rect class="layer" x="0" y="54"  width="246" height="12" rx="6" fill="rgba(167,139,250,.10)" stroke="rgba(167,139,250,.18)"/>
+                <rect class="layer" x="0" y="72"  width="246" height="12" rx="6" fill="rgba(167,139,250,.11)" stroke="rgba(167,139,250,.18)"/>
+                <rect class="layer" x="0" y="90"  width="246" height="12" rx="6" fill="rgba(167,139,250,.12)" stroke="rgba(167,139,250,.18)"/>
+                <rect class="layer" x="0" y="108" width="246" height="12" rx="6" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.16)"/>
+                <rect class="layer" x="0" y="126" width="246" height="12" rx="6" fill="rgba(52,211,153,.09)" stroke="rgba(52,211,153,.16)"/>
+                <rect class="layer" x="0" y="144" width="246" height="12" rx="6" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.16)"/>
+                <rect class="layer" x="0" y="162" width="246" height="12" rx="6" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.10)"/>
+              </g>
+            </g>
+          </g>
+
+          <!-- Sampling / probabilities -->
+          <g id="boxProb" transform="translate(20,0)">
+            <rect x="1190" y="120" width="270" height="220" rx="18" fill="url(#gPanel)" stroke="rgba(255,255,255,.10)"/>
+            <text x="1212" y="156" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Selection</text>
+            <text x="1212" y="182" fill="rgba(167,180,216,.95)" font-size="12">Logits → softmax → probabilities</text>
+            <text x="1212" y="202" fill="rgba(167,180,216,.95)" font-size="12">Top-k / Top-p / temperature (optional)</text>
+
+            <!-- Probability bars -->
+            <g id="probBars" transform="translate(1212,216)">
+              <text x="0" y="12" fill="rgba(167,180,216,.90)" font-size="11">token A</text>
+              <rect x="58" y="2" width="180" height="12" rx="6" fill="rgba(255,255,255,.06)"/>
+              <rect id="pA" x="58" y="2" width="120" height="12" rx="6" fill="rgba(110,231,255,.55)" filter="url(#softGlow)"/>
+
+              <text x="0" y="38" fill="rgba(167,180,216,.90)" font-size="11">token B</text>
+              <rect x="58" y="28" width="180" height="12" rx="6" fill="rgba(255,255,255,.06)"/>
+              <rect id="pB" x="58" y="28" width="58" height="12" rx="6" fill="rgba(167,139,250,.55)"/>
+
+              <text x="0" y="64" fill="rgba(167,180,216,.90)" font-size="11">token C</text>
+              <rect x="58" y="54" width="180" height="12" rx="6" fill="rgba(255,255,255,.06)"/>
+              <rect id="pC" x="58" y="54" width="34" height="12" rx="6" fill="rgba(52,211,153,.50)"/>
+
+              <text x="0" y="90" fill="rgba(167,180,216,.90)" font-size="11">…</text>
+              <rect x="58" y="80" width="180" height="12" rx="6" fill="rgba(255,255,255,.06)"/>
+              <rect id="pD" x="58" y="80" width="16" height="12" rx="6" fill="rgba(251,191,36,.45)"/>
+            </g>
+
+            <g opacity=".9">
+              <text x="1212" y="326" fill="rgba(234,240,255,.92)" font-size="12" font-weight="650">→ choose the most likely next token</text>
+            </g>
+          </g>
+
+          <!-- Output -->
+          <g id="boxOutput" transform="translate(20,0)">
+            <rect x="1190" y="350" width="270" height="90" rx="18" fill="url(#gPanel)" stroke="rgba(255,255,255,.10)"/>
+            <text x="1212" y="386" fill="rgba(234,240,255,.96)" font-size="16" font-weight="650">Output</text>
+            <text x="1212" y="412" fill="rgba(167,180,216,.95)" font-size="12">Generated answer (tokens → text)</text>
+          </g>
+
+          <!-- Particles (animated in JS) -->
+          <g id="particles"></g>
+
+          <!-- Highlight ring (stage focus) -->
+          <g id="focusRing" opacity=".95" pointer-events="none" filter="url(#softGlow)">
+            <rect id="focusRect" x="60" y="90" width="220" height="90" rx="20"
+              fill="transparent" stroke="rgba(251,191,36,.85)" stroke-width="3"/>
+          </g>
+        </svg>
+
+        <div class="hint">
+          <strong>Note:</strong> this is a simplified high-level visualization. In practice, an LLM generates output token by token:
+          at each step it computes a probability distribution over the next token and selects one (often via sampling) until it produces a complete response.
+        </div>
+      </section>
+    </div>
+    <div class="index-modal" id="indexModal" aria-hidden="true">
+      <div class="overlay" id="indexOverlay"></div>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="indexModalTitle">
+        <div class="index-modal-header">
+          <h2 class="index-modal-title" id="indexModalTitle">Index of terms</h2>
+          <button id="indexClose" class="index-close" type="button" title="Close index" aria-label="Close index">✕</button>
+        </div>
+        <div class="index-search-wrap">
+          <input id="indexSearch" class="index-search" type="text" placeholder="Search term..." aria-label="Search terms" />
+        </div>
+        <div class="index-modal-body" id="indexModalBody"></div>
+      </div>
+    </div>
+    <div class="index-modal" id="notesSearchModal" aria-hidden="true">
+      <div class="overlay" id="notesSearchOverlay"></div>
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="notesSearchTitle">
+        <div class="index-modal-header">
+          <h2 class="index-modal-title" id="notesSearchTitle">Search</h2>
+          <button id="notesSearchClose" class="index-close" type="button" title="Close search" aria-label="Close search">✕</button>
+        </div>
+        <div class="index-search-wrap">
+          <input id="notesSearchInput" class="index-search" type="text" placeholder="Search text..." aria-label="Search" />
+        </div>
+        <div class="index-modal-body" id="notesSearchBody"></div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        /** @typedef {{el: SVGCircleElement, path: number, t: number, speed: number, r: number, hue: number}} Particle */
+        const $ = (id) => /** @type {HTMLElement} */(document.getElementById(id));
+
+        const btnPrev = $("btnPrev");
+        const btnNext = $("btnNext");
+        const btnIndex = $("btnIndex");
+        const btnNotesSearch = $("btnNotesSearch");
+        const indexModal = $("indexModal");
+        const indexOverlay = $("indexOverlay");
+        const indexClose = $("indexClose");
+        const indexSearch = /** @type {HTMLInputElement} */(document.getElementById("indexSearch"));
+        const indexModalBody = $("indexModalBody");
+        const notesSearchModal = $("notesSearchModal");
+        const notesSearchOverlay = $("notesSearchOverlay");
+        const notesSearchClose = $("notesSearchClose");
+        const notesSearchInput = /** @type {HTMLInputElement} */(document.getElementById("notesSearchInput"));
+        const notesSearchBody = $("notesSearchBody");
+        const svg = /** @type {SVGSVGElement} */(document.getElementById("llmDiagram"));
+        const particlesG = /** @type {SVGGElement} */(document.getElementById("particles"));
+        const focusRing = /** @type {SVGGElement} */(document.getElementById("focusRing"));
+        const focusRect = /** @type {SVGRectElement} */(document.getElementById("focusRect"));
+        const stageText = $("stageText");
+        const stageDot = /** @type {HTMLSpanElement} */(document.getElementById("stageDot"));
+        const stageA11y = $("stageA11y");
+        const stageNotes = $("stageNotes");
+        const stageNotesText = $("stageNotesText");
+        const stageNotesFlip = $("stageNotesFlip");
+        const stageLinks = $("stageLinks");
+        const promptFill = /** @type {SVGRectElement} */(document.getElementById("promptFill"));
+
+        const layerEls = Array.from(document.querySelectorAll(".layer"));
+        const pA = /** @type {SVGRectElement} */(document.getElementById("pA"));
+        const pB = /** @type {SVGRectElement} */(document.getElementById("pB"));
+        const pC = /** @type {SVGRectElement} */(document.getElementById("pC"));
+        const pD = /** @type {SVGRectElement} */(document.getElementById("pD"));
+
+        const txEmbGlow = /** @type {SVGRectElement} */(document.getElementById("txEmbGlow"));
+        const txAttnGlow = /** @type {SVGRectElement} */(document.getElementById("txAttnGlow"));
+        const txMlpGlow = /** @type {SVGRectElement} */(document.getElementById("txMlpGlow"));
+        const txQkvLines = /** @type {SVGPathElement} */(document.getElementById("txQkvLines"));
+        const txMiniParticles = /** @type {SVGGElement} */(document.getElementById("txMiniParticles"));
+
+        // Paths are represented as piecewise cubic curves approximated by a parametric function (simple for this layout).
+        // 0: Model training -> Prompt
+        // 1: Instructions -> Prompt
+        // 2: Data -> Prompt
+        // 3: Prompt -> Vectorization
+        // 4: Vectorization -> LLM
+        // 5: LLM -> Probabilities
+        // 6: Probabilities -> Output
+        const paths = [
+          (t) => cubic({x:160,y:135},{x:270,y:135},{x:275,y:135},{x:320,y:135}, t),
+          (t) => cubic({x:160,y:235},{x:270,y:235},{x:275,y:235},{x:320,y:235}, t),
+          (t) => cubic({x:160,y:335},{x:270,y:335},{x:275,y:335},{x:320,y:335}, t),
+          (t) => cubic({x:560,y:235},{x:580,y:235},{x:595,y:235},{x:616,y:235}, t),
+          (t) => cubic({x:820,y:235},{x:838,y:235},{x:852,y:235},{x:866,y:235}, t),
+          (t) => cubic({x:1170,y:235},{x:1195,y:235},{x:1204,y:235},{x:1206,y:235}, t),
+          (t) => cubic({x:1480,y:235},{x:1420,y:280},{x:1370,y:320},{x:1345,y:395}, t)
+        ];
+
+        /** @param {{x:number,y:number}} p0 @param {{x:number,y:number}} p1 @param {{x:number,y:number}} p2 @param {{x:number,y:number}} p3 @param {number} t */
+        function cubic(p0,p1,p2,p3,t){
+          const u = 1 - t;
+          const tt = t*t, uu = u*u;
+          const uuu = uu*u, ttt = tt*t;
+          return {
+            x: uuu*p0.x + 3*uu*t*p1.x + 3*u*tt*p2.x + ttt*p3.x,
+            y: uuu*p0.y + 3*uu*t*p1.y + 3*u*tt*p2.y + ttt*p3.y
+          };
+        }
+
+        /** @param {number} min @param {number} max */
+        function rand(min,max){ return min + Math.random()*(max-min); }
+        /** @param {number} v @param {number} min @param {number} max */
+        function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+        function escapeHtml(value){
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+        function capitalizeFirst(value){
+          const text = String(value || "");
+          if (!text) return text;
+          return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+        function stripWrappingQuotes(value){
+          return String(value || "")
+            .trim()
+            .replace(/^["']+/, "")
+            .replace(/["']+$/, "")
+            .trim();
+        }
+
+        /** @param {string} tag */
+        function svgEl(tag){ return /** @type {any} */(document.createElementNS("http://www.w3.org/2000/svg", tag)); }
+
+        /** @type {Particle[]} */
+        const particles = [];
+
+        // Mini "inside a Transformer block" animation (local coords inside txMini group).
+        /** @type {SVGCircleElement | null} */
+        let txDot = null;
+        /** @type {SVGCircleElement[]} */
+        const txSplitDots = [];
+        let txReady = false;
+
+        function initTxMini(){
+          if (txReady || !txMiniParticles) return;
+          txReady = true;
+
+          txDot = /** @type {SVGCircleElement} */(svgEl("circle"));
+          txDot.setAttribute("r", "3.2");
+          txDot.setAttribute("fill", "rgba(110,231,255,.85)");
+          txDot.setAttribute("filter", "url(#softGlow)");
+          txDot.setAttribute("opacity", "0");
+          txMiniParticles.appendChild(txDot);
+
+          for (let i=0;i<3;i++){
+            const c = /** @type {SVGCircleElement} */(svgEl("circle"));
+            c.setAttribute("r", "2.6");
+            c.setAttribute("fill", "rgba(167,139,250,.80)");
+            c.setAttribute("filter", "url(#softGlow)");
+            c.setAttribute("opacity", "0");
+            txMiniParticles.appendChild(c);
+            txSplitDots.push(c);
+          }
+        }
+
+        function spawnParticle(pathIndex){
+          const c = /** @type {SVGCircleElement} */(svgEl("circle"));
+          const r = rand(2.4, 4.0);
+          const hue = rand(175, 210);
+          c.setAttribute("r", String(r));
+          c.setAttribute("fill", `hsla(${hue}, 95%, 70%, .85)`);
+          c.setAttribute("opacity", "0.92");
+          c.setAttribute("filter", "url(#softGlow)");
+          particlesG.appendChild(c);
+
+          /** @type {Particle} */
+          const p = {
+            el: c,
+            path: pathIndex,
+            t: rand(0, 0.08),
+            speed: rand(0.0028, 0.0062),
+            r,
+            hue
+          };
+          particles.push(p);
+        }
+
+        function trimParticles(){
+          // Keep bounded for performance.
+          while (particles.length > 120){
+            const p = particles.shift();
+            if (p && p.el && p.el.parentNode) p.el.parentNode.removeChild(p.el);
+          }
+        }
+
+
+        let stageIndex = 0;
+        const stageTermIndex = buildStageTermIndex();
+        const notesSearchEntries = buildNotesSearchEntries();
+
+        function buildStageTermIndex(){
+          /** @type {Map<string, {label:string, kind:"m"|"e", refs:Array<{stageIndex:number, stageName:string}>}>} */
+          const indexMap = new Map();
+          const termRegex = /<(m|e)>([\s\S]*?)<\/\1>/gi;
+          for (let i = 0; i < stages.length; i++){
+            const s = stages[i];
+            if (!s || typeof s.notes !== "string" || !s.notes.trim()) continue;
+            /** @type {Set<string>} */
+            const seenInStage = new Set();
+            let match;
+            while ((match = termRegex.exec(s.notes)) !== null){
+              const kind = /** @type {"m"|"e"} */(String(match[1]).toLowerCase());
+              const rawTerm = String(match[2]).replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "");
+              const normalized = stripWrappingQuotes(rawTerm.replace(/\s+/g, " ").trim());
+              if (!normalized) continue;
+              const key = normalized.toLowerCase();
+              const stageKey = `${key}|${i}`;
+              if (seenInStage.has(stageKey)) continue;
+              seenInStage.add(stageKey);
+              if (!indexMap.has(key)){
+                indexMap.set(key, { label: normalized, kind, refs: [] });
+              }
+              const existing = indexMap.get(key);
+              if (!existing) continue;
+              if (existing.kind === "e" && kind === "m") existing.kind = "m";
+              existing.refs.push({ stageIndex: i, stageName: s.name });
+            }
+          }
+          return Array.from(indexMap.values())
+            .map((item) => ({
+              label: item.label,
+              kind: item.kind,
+              refs: item.refs.sort((a,b) => a.stageIndex - b.stageIndex)
+            }))
+            .sort((a,b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }));
+        }
+
+        function stripHtmlForSearch(html){
+          return String(html || "")
+            .replace(/<br\s*\/?>/gi, " ")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function buildNotesSearchEntries(){
+          const entries = [];
+          for (let i = 0; i < stages.length; i++){
+            const s = stages[i];
+            if (!s || typeof s.notes !== "string" || !s.notes.trim()) continue;
+            const text = stripHtmlForSearch(s.notes);
+            if (!text) continue;
+            entries.push({
+              stageIndex: i,
+              stageName: s.name,
+              text,
+              textLower: text.toLowerCase()
+            });
+          }
+          return entries;
+        }
+
+        function buildSnippet(text, textLower, query){
+          const at = textLower.indexOf(query);
+          if (at < 0) return text.slice(0, 170);
+          const from = Math.max(0, at - 70);
+          const to = Math.min(text.length, at + query.length + 90);
+          const left = from > 0 ? "... " : "";
+          const right = to < text.length ? " ..." : "";
+          return `${left}${text.slice(from, to).trim()}${right}`;
+        }
+
+        function highlightQueryInSnippet(text, query){
+          if (!query) return escapeHtml(text);
+          const lowerText = String(text).toLowerCase();
+          const lowerQuery = String(query).toLowerCase();
+          let from = 0;
+          let pos = lowerText.indexOf(lowerQuery, from);
+          if (pos < 0) return escapeHtml(text);
+          let out = "";
+          while (pos >= 0){
+            out += escapeHtml(text.slice(from, pos));
+            out += `<search_part>${escapeHtml(text.slice(pos, pos + query.length))}</search_part>`;
+            from = pos + query.length;
+            pos = lowerText.indexOf(lowerQuery, from);
+          }
+          out += escapeHtml(text.slice(from));
+          return out;
+        }
+
+        function openIndexModal(){
+          if (!indexModal) return;
+          closeNotesSearchModal();
+          indexModal.classList.add("is-open");
+          indexModal.setAttribute("aria-hidden", "false");
+          renderIndexModal();
+          indexSearch?.focus();
+        }
+
+        function closeIndexModal(){
+          if (!indexModal) return;
+          indexModal.classList.remove("is-open");
+          indexModal.setAttribute("aria-hidden", "true");
+        }
+
+        function openNotesSearchModal(){
+          if (!notesSearchModal) return;
+          closeIndexModal();
+          notesSearchModal.classList.add("is-open");
+          notesSearchModal.setAttribute("aria-hidden", "false");
+          renderNotesSearchModal();
+          notesSearchInput?.focus();
+        }
+
+        function closeNotesSearchModal(){
+          if (!notesSearchModal) return;
+          notesSearchModal.classList.remove("is-open");
+          notesSearchModal.setAttribute("aria-hidden", "true");
+        }
+
+        function renderIndexModal(){
+          if (!indexModalBody) return;
+          if (!stageTermIndex.length){
+            indexModalBody.innerHTML = `<div class="index-empty">No terms with tags &lt;m&gt; and &lt;e&gt; were found.</div>`;
+            return;
+          }
+          const query = (indexSearch?.value || "").toLowerCase().trim();
+          const filteredTerms = query
+            ? stageTermIndex.filter((term) => term.label.toLowerCase().includes(query))
+            : stageTermIndex;
+          if (!filteredTerms.length){
+            indexModalBody.innerHTML = `<div class="index-empty">No terms found.</div>`;
+            return;
+          }
+          const html = filteredTerms.map((term) => {
+            const kindClass = term.kind === "m" ? "is-main" : "is-extra";
+            const links = term.refs.map((ref) => {
+              return `<a href="#" class="index-stage-link" data-stage-index="${ref.stageIndex}">${escapeHtml(ref.stageName)}</a>`;
+            }).join("");
+            return `
+              <li class="index-item">
+                <span class="index-term ${kindClass}">${escapeHtml(capitalizeFirst(term.label))}</span>
+                <div class="index-stage-links">${links}</div>
+              </li>
+            `;
+          }).join("");
+          indexModalBody.innerHTML = `<ul class="index-list">${html}</ul>`;
+        }
+
+        function renderNotesSearchModal(){
+          if (!notesSearchBody) return;
+          const query = (notesSearchInput?.value || "").toLowerCase().trim();
+          if (!query){
+            notesSearchBody.innerHTML = `<div class="index-empty">Type a phrase to search in all stage notes.</div>`;
+            return;
+          }
+          const filtered = notesSearchEntries.filter((entry) => entry.textLower.includes(query));
+          if (!filtered.length){
+            notesSearchBody.innerHTML = `<div class="index-empty">No notes found.</div>`;
+            return;
+          }
+          const html = filtered.map((entry) => {
+            const snippet = buildSnippet(entry.text, entry.textLower, query);
+            const highlightedSnippet = highlightQueryInSnippet(snippet, query);
+            return `
+              <li class="notes-search-item">
+                <a href="#" class="notes-search-link" data-stage-index="${entry.stageIndex}">
+                  <p class="notes-search-stage">${escapeHtml(entry.stageName)}</p>
+                  <p class="notes-search-snippet">${highlightedSnippet}</p>
+                </a>
+              </li>
+            `;
+          }).join("");
+          notesSearchBody.innerHTML = `<ul class="notes-search-list">${html}</ul>`;
+        }
+
+        function setStage(i){
+          stageIndex = ((i % stages.length) + stages.length) % stages.length;
+          const s = stages[stageIndex];
+          stageText.textContent = s.name;
+          stageA11y.textContent = s.name;
+          stageDot.style.background = s.dot;
+          stageDot.style.boxShadow = `0 0 0 3px ${s.dot.replace(")", ", .10)").replace("rgba", "rgba")}`;
+
+          // Update notes (render as HTML)
+          if (s.notes) {
+            stageNotesText.innerHTML = s.notes;
+            stageNotes.style.display = "block";
+          } else {
+            stageNotes.style.display = "none";
+          }
+
+          // Links: show flip button only when links exist
+          stageNotes.classList.remove("is-flipped");
+          stageNotesFlip?.setAttribute("aria-pressed", "false");
+          if (s.links && Array.isArray(s.links) && s.links.length > 0) {
+            const items = s.links
+              .filter((l) => l && typeof l.url === "string" && l.url.trim().length > 0)
+              .map((l) => {
+                const text = (l.text && String(l.text).trim().length > 0) ? String(l.text) : l.url;
+                return `<li><a href="${l.url}" target="_blank" rel="noopener noreferrer">${text}</a></li>`;
+              })
+              .join("");
+            stageLinks.innerHTML = `
+              <div style="flex:1; min-height:0; min-width:0;">
+                <div class="links-title">Usefull links</div>
+                <ul class="links-list">${items}</ul>
+              </div>
+            `;
+            stageNotesFlip.style.display = "inline-flex";
+            stageNotesFlip.setAttribute("title", "Show links");
+            stageNotesFlip.setAttribute("aria-label", "Show links");
+          } else {
+            stageLinks.innerHTML = "";
+            stageNotesFlip.style.display = "none";
+          }
+
+          // Stage focus ring (optional). If a stage has no `focus`, nothing is selected on the diagram.
+          if (s.focus && typeof s.focus.x === "number" && typeof s.focus.y === "number" && typeof s.focus.w === "number" && typeof s.focus.h === "number"){
+            focusRing?.setAttribute("opacity", "0.95");
+            focusRect.setAttribute("x", String(s.focus.x));
+            focusRect.setAttribute("y", String(s.focus.y));
+            focusRect.setAttribute("width", String(s.focus.w));
+            focusRect.setAttribute("height", String(s.focus.h));
+          } else {
+            focusRing?.setAttribute("opacity", "0");
+          }
+        }
+
+        /** @param {MouseEvent} evt */
+        function getSvgPoint(evt){
+          const ctm = svg?.getScreenCTM();
+          if (!svg || !ctm) return null;
+          const p = new DOMPoint(evt.clientX, evt.clientY).matrixTransform(ctm.inverse());
+          return { x: p.x, y: p.y };
+        }
+
+        /** @param {number} x @param {number} y */
+        function pickStageByPoint(x, y){
+          // If multiple focus rects contain the point, pick the smallest one (more specific).
+          /** @type {{idx:number, area:number} | null} */
+          let best = null;
+          for (let idx = 0; idx < stages.length; idx++){
+            const f = stages[idx].focus;
+            if (!f) continue;
+            if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h){
+              const area = f.w * f.h;
+              if (!best || area < best.area) best = { idx, area };
+            }
+          }
+          return best ? best.idx : null;
+        }
+
+        let last = performance.now();
+
+        function updatePromptFill(t){
+          // 38..198
+          const w = 38 + Math.floor(160 * (0.5 + 0.5*Math.sin(t*0.0012)));
+          promptFill.setAttribute("width", String(w));
+        }
+
+        function updateLayers(t){
+          const base = 0.10 + 0.06*Math.sin(t*0.0015);
+          for (let i=0;i<layerEls.length;i++){
+            const phase = (i/layerEls.length) * Math.PI * 2;
+            const a = clamp(base + 0.12*Math.sin(t*0.003 + phase), 0.06, 0.28);
+            layerEls[i].setAttribute("opacity", String(a + 0.60));
+          }
+
+          // Extra "scan" highlight when we're explicitly in the layers stage.
+          if (stages[stageIndex]?.name === "Through many layers"){
+            const idx = Math.floor((t / 180) % layerEls.length);
+            for (let i=0;i<layerEls.length;i++){
+              if (i === idx){
+                layerEls[i].setAttribute("opacity", "1");
+                layerEls[i].setAttribute("stroke", "rgba(110,231,255,.45)");
+              } else {
+                // restore original per-element strokes (approx based on fill family)
+                const fill = layerEls[i].getAttribute("fill") || "";
+                if (fill.includes("167,139,250")) layerEls[i].setAttribute("stroke", "rgba(167,139,250,.18)");
+                else if (fill.includes("52,211,153")) layerEls[i].setAttribute("stroke", "rgba(52,211,153,.16)");
+                else if (fill.includes("255,255,255")) layerEls[i].setAttribute("stroke", "rgba(255,255,255,.10)");
+                else layerEls[i].setAttribute("stroke", "rgba(110,231,255,.18)");
+              }
+            }
+          }
+        }
+
+        function updateProbBars(t){
+          // Make A dominant, with gentle breathing and occasional "competition".
+          const swing = 0.5 + 0.5*Math.sin(t*0.0017);
+          const wobble = 0.5 + 0.5*Math.sin(t*0.0047);
+          const a = clamp(0.62 + 0.20*swing - 0.05*wobble, 0.45, 0.90);
+          const b = clamp(0.22 + 0.08*(1-swing) + 0.04*wobble, 0.05, 0.45);
+          const c = clamp(0.12 + 0.05*(1-wobble), 0.03, 0.25);
+          const d = clamp(0.06 + 0.03*(1-swing), 0.02, 0.15);
+          // Convert to widths (max 180)
+          pA.setAttribute("width", String(Math.round(180*a)));
+          pB.setAttribute("width", String(Math.round(180*b)));
+          pC.setAttribute("width", String(Math.round(180*c)));
+          pD.setAttribute("width", String(Math.round(180*d)));
+        }
+
+        /** @param {number} t */
+        function updateTxMini(t){
+          // Only animate the mini-diagram while focusing on LLM stages.
+          const stageName = stages[stageIndex]?.name || "";
+          const active = (stageName === "Vectorization" || stageName === "Through many layers");
+          if (!active || !txReady || !txDot || !txEmbGlow || !txAttnGlow || !txMlpGlow || !txQkvLines){
+            if (txDot) txDot.setAttribute("opacity", "0");
+            for (const c of txSplitDots) c.setAttribute("opacity", "0");
+            if (txEmbGlow) txEmbGlow.setAttribute("opacity", "0");
+            if (txAttnGlow) txAttnGlow.setAttribute("opacity", "0");
+            if (txMlpGlow) txMlpGlow.setAttribute("opacity", "0");
+            return;
+          }
+
+          const cycle = 1400;
+          const u = (t % cycle) / cycle;
+
+          // Utility: linear interpolation between points.
+          const lerp = (a,b,k) => a + (b-a)*k;
+          const setDot = (el, x, y, op) => {
+            el.setAttribute("cx", String(x));
+            el.setAttribute("cy", String(y));
+            el.setAttribute("opacity", String(op));
+          };
+
+          // Key points in local txMini coordinates.
+          const P_in  = {x: 20, y: 37};
+          const P_q0  = {x: 60, y: 37};
+          const P_Q   = {x: 95, y: 22};
+          const P_K   = {x: 95, y: 37};
+          const P_V   = {x: 95, y: 52};
+          const P_att = {x: 153, y: 37};
+          const P_add = {x: 194, y: 37};
+          const P_mlp = {x: 242, y: 37};
+          const P_out = {x: 272, y: 37};
+
+          // Reset glows
+          txEmbGlow.setAttribute("opacity", "0");
+          txAttnGlow.setAttribute("opacity", "0");
+          txMlpGlow.setAttribute("opacity", "0");
+
+          // Animate dashed QKV lines.
+          const dash = -Math.floor((t / 70) % 60);
+          txQkvLines.setAttribute("stroke-dashoffset", String(dash));
+
+          // Phase ranges
+          if (u < 0.20){
+            // Embeddings -> split start
+            const k = u / 0.20;
+            setDot(txDot, lerp(P_in.x, P_q0.x, k), lerp(P_in.y, P_q0.y, k), 0.95);
+            for (const c of txSplitDots) c.setAttribute("opacity", "0");
+            txEmbGlow.setAttribute("opacity", String(0.25 + 0.55*Math.sin(k*Math.PI)));
+          } else if (u < 0.36){
+            // Split into Q/K/V (3 dots)
+            setDot(txDot, P_q0.x, P_q0.y, 0.25);
+            const k = (u - 0.20) / (0.16);
+            setDot(txSplitDots[0], lerp(P_q0.x, P_Q.x, k), lerp(P_q0.y, P_Q.y, k), 0.92);
+            setDot(txSplitDots[1], lerp(P_q0.x, P_K.x, k), lerp(P_q0.y, P_K.y, k), 0.92);
+            setDot(txSplitDots[2], lerp(P_q0.x, P_V.x, k), lerp(P_q0.y, P_V.y, k), 0.92);
+          } else if (u < 0.58){
+            // To attention
+            for (const c of txSplitDots) c.setAttribute("opacity", "0");
+            const k = (u - 0.36) / (0.22);
+            setDot(txDot, lerp(P_K.x, P_att.x, k), lerp(P_K.y, P_att.y, k), 0.95);
+            txAttnGlow.setAttribute("opacity", String(0.22 + 0.55*Math.sin(k*Math.PI)));
+          } else if (u < 0.70){
+            // To residual add
+            const k = (u - 0.58) / (0.12);
+            setDot(txDot, lerp(P_att.x, P_add.x, k), lerp(P_att.y, P_add.y, k), 0.95);
+          } else if (u < 0.92){
+            // To MLP
+            const k = (u - 0.70) / (0.22);
+            setDot(txDot, lerp(P_add.x, P_mlp.x, k), lerp(P_add.y, P_mlp.y, k), 0.95);
+            txMlpGlow.setAttribute("opacity", String(0.22 + 0.55*Math.sin(k*Math.PI)));
+          } else {
+            // Output (fade)
+            const k = (u - 0.92) / (0.08);
+            setDot(txDot, lerp(P_mlp.x, P_out.x, k), lerp(P_mlp.y, P_out.y, k), clamp(0.95 - 1.4*k, 0, 0.95));
+          }
+        }
+
+        function tick(now){
+          const dt = Math.min(34, now - last); // cap
+          last = now;
+
+          const animFactor = 1.0;
+
+          // Spawn particles depending on stage.
+          const spawnBase = 1.0;
+          // small randomness to avoid a too-rhythmic look
+          if (Math.random() < 0.18 * spawnBase) spawnParticle(0);
+          if (Math.random() < 0.18 * spawnBase) spawnParticle(1);
+          if (Math.random() < 0.18 * spawnBase) spawnParticle(2);
+          if (Math.random() < 0.26 * spawnBase) spawnParticle(3);
+          if (Math.random() < 0.20 * spawnBase) spawnParticle(4);
+          if (Math.random() < 0.20 * spawnBase) spawnParticle(5);
+          // The last hop (probabilities -> output) should mostly show up on the final stages.
+          const stageName = stages[stageIndex]?.name || "";
+          if ((stageName === "Probabilities and selection" || stageName === "Output") && Math.random() < 0.12 * spawnBase) spawnParticle(6);
+          trimParticles();
+
+          // Move particles.
+          for (let i = particles.length - 1; i >= 0; i--){
+            const p = particles[i];
+            p.t += p.speed * animFactor * (dt / 16.67);
+            if (p.t >= 1.02){
+              // advance to next path stage
+              if (p.path < 6){
+                p.path += 1;
+                p.t = 0;
+                // color shift through pipeline
+                const hue = (p.path === 3 || p.path === 4) ? rand(185, 235) : (p.path === 5) ? rand(160, 220) : rand(175, 210);
+                p.hue = hue;
+                p.el.setAttribute("fill", `hsla(${hue}, 95%, 70%, .86)`);
+              } else {
+                // done
+                if (p.el.parentNode) p.el.parentNode.removeChild(p.el);
+                particles.splice(i, 1);
+                continue;
+              }
+            }
+
+            const pos = paths[p.path](clamp(p.t, 0, 1));
+            // jitter near LLM layers to imply computation
+            const jitter = (p.path === 3 || p.path === 4) ? 1.6 : 0.8;
+            const jx = (Math.random() - 0.5) * jitter;
+            const jy = (Math.random() - 0.5) * jitter;
+
+            p.el.setAttribute("cx", String(pos.x + jx));
+            p.el.setAttribute("cy", String(pos.y + jy));
+          }
+
+          // Stage-driven UI accents.
+          updatePromptFill(now);
+          updateLayers(now);
+          updateProbBars(now);
+          updateTxMini(now);
+
+          requestAnimationFrame(tick);
+        }
+
+        btnPrev.addEventListener("click", () => {
+          setStage(stageIndex - 1);
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+        });
+
+        btnNext.addEventListener("click", () => {
+          setStage(stageIndex + 1);
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+        });
+        btnIndex?.addEventListener("click", openIndexModal);
+        btnNotesSearch?.addEventListener("click", openNotesSearchModal);
+        indexClose?.addEventListener("click", closeIndexModal);
+        indexOverlay?.addEventListener("click", closeIndexModal);
+        indexSearch?.addEventListener("input", () => {
+          renderIndexModal();
+        });
+        indexModalBody?.addEventListener("click", (e) => {
+          const target = /** @type {HTMLElement | null} */(e.target instanceof HTMLElement ? e.target : null);
+          if (!target) return;
+          const link = target.closest(".index-stage-link");
+          if (!(link instanceof HTMLElement)) return;
+          e.preventDefault();
+          const nextIndex = Number(link.getAttribute("data-stage-index"));
+          if (!Number.isFinite(nextIndex)) return;
+          setStage(nextIndex);
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+          closeIndexModal();
+        });
+        notesSearchClose?.addEventListener("click", closeNotesSearchModal);
+        notesSearchOverlay?.addEventListener("click", closeNotesSearchModal);
+        notesSearchInput?.addEventListener("input", () => {
+          renderNotesSearchModal();
+        });
+        notesSearchBody?.addEventListener("click", (e) => {
+          const target = /** @type {HTMLElement | null} */(e.target instanceof HTMLElement ? e.target : null);
+          if (!target) return;
+          const link = target.closest(".notes-search-link");
+          if (!(link instanceof HTMLElement)) return;
+          e.preventDefault();
+          const nextIndex = Number(link.getAttribute("data-stage-index"));
+          if (!Number.isFinite(nextIndex)) return;
+          setStage(nextIndex);
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+          closeNotesSearchModal();
+        });
+
+        stageNotesFlip?.addEventListener("click", () => {
+          const flipped = stageNotes.classList.toggle("is-flipped");
+          stageNotesFlip.setAttribute("aria-pressed", flipped ? "true" : "false");
+          stageNotesFlip.setAttribute("title", flipped ? "Show notes" : "Show links");
+          stageNotesFlip.setAttribute("aria-label", flipped ? "Show notes" : "Show links");
+        });
+
+        // Keyboard navigation (left/right arrows).
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowLeft"){
+            e.preventDefault();
+            setStage(stageIndex - 1);
+          } else if (e.key === "ArrowRight"){
+            e.preventDefault();
+            setStage(stageIndex + 1);
+          } else if (e.key === "Escape"){
+            if (notesSearchModal?.classList.contains("is-open")){
+              e.preventDefault();
+              closeNotesSearchModal();
+            } else if (indexModal?.classList.contains("is-open")){
+              e.preventDefault();
+              closeIndexModal();
+            } else {
+              return;
+            }
+          } else {
+            return;
+          }
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+        }, { passive: false });
+
+        // Mouse navigation: click a block to jump to its stage.
+        svg?.addEventListener("click", (e) => {
+          // Ignore clicks on the focus ring (pointer-events none anyway) or outside SVG content.
+          const p = getSvgPoint(e);
+          if (!p) return;
+          const idx = pickStageByPoint(p.x, p.y);
+          // Click outside any focus rectangle -> go to stage 0 ("Introduction", no focus ring).
+          setStage(idx == null ? 0 : idx);
+          updatePromptFill(performance.now());
+          updateLayers(performance.now());
+          updateProbBars(performance.now());
+        });
+
+        // Initialize.
+        initTxMini();
+        setStage(0);
+        // Warm start: a few particles
+        for (let i=0;i<21;i++) spawnParticle(i%7);
+        requestAnimationFrame((t) => { last = t; requestAnimationFrame(tick); });
+      })();
+    </script>
+  </body>
+</html>
+
