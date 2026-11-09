@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 1: Foundations</title>
+    <style>
+        /* ── Base ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000;
+            color: #FFF;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Stepper ── */
+        .stepper {
+            display: flex;
+            align-items: center;
+            padding: 10px 32px;
+            background: #0D0D0D;
+            border-bottom: 2px solid #1A1A1A;
+            flex-shrink: 0;
+            gap: 0;
+        }
+        .step {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 20px;
+            background: transparent;
+            border: 2px solid #2A2A2A;
+            color: #777;
+            cursor: pointer;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+            text-transform: none;
+            position: relative;
+        }
+        .step:hover { color: #bbb; border-color: #666; background: rgba(255,255,255,0.04); }
+        .step.active {
+            color: #93C5FD;
+            border-color: #60A5FA;
+            border-width: 2px;
+            background: rgba(96,165,250,0.13);
+            box-shadow: 0 0 0 1px rgba(96,165,250,0.25), inset 0 -3px 0 #60A5FA;
+            font-weight: 600;
+        }
+        .step.done { color: #34D399; border-color: #10B981; background: rgba(16,185,129,0.08); }
+        .step .num {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #2A2A2A; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: #888; flex-shrink: 0;
+            font-weight: 700;
+        }
+        .step.active .num { background: #60A5FA; color: #000; box-shadow: 0 0 8px rgba(96,165,250,0.6); }
+        .step.done .num { background: #10B981; color: #000; }
+        .sep { color: #555; padding: 0 8px; font-size: 1.2rem; flex-shrink: 0; font-weight: bold; }
+
+        /* ── Slides container ── */
+        .slides-wrap { flex: 1; overflow: hidden; position: relative; }
+        .slide { display: none; position: absolute; inset: 0; flex-direction: column; overflow: hidden; }
+        .slide.active { display: flex; }
+
+        /* ── Shared slide styles (same across all slides) ── */
+        .slide .container {
+            flex: 1;
+            padding: 14px 48px 16px;
+            overflow-y: auto;
+            max-width: 100%;
+        }
+        .slide h1 {
+            font-size: 2rem; font-weight: 300; margin-bottom: 3px;
+            color: #60A5FA; letter-spacing: -0.02em;
+        }
+        .slide .subtitle {
+            font-size: 0.9rem; color: #A78BFA; font-weight: 300; margin-bottom: 10px;
+        }
+        .slide .subtitle strong { color: #F472B6; font-weight: 600; }
+
+        /* ── Slide 1: Traditional vs Agentic ── */
+        #slide-1 .content-area { position: relative; min-height: 320px; margin: 10px 0; }
+        #slide-1 .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        #slide-1 .box { background: #0A0A0A; border: 1px solid #333; padding: 14px 16px; position: relative; min-height: 280px; }
+        #slide-1 .box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3B82F6, #8B5CF6, #EC4899); }
+        #slide-1 .box h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 10px; color: #FFF; }
+        #slide-1 .flow-diagram { display: flex; align-items: center; justify-content: center; margin: 10px 0; gap: 10px; }
+        #slide-1 .flow-box { width: 50px; height: 50px; background: #1A1A1A; border: 2px solid #333; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        #slide-1 .arrow { font-size: 1.5rem; color: #A78BFA; font-weight: bold; }
+        #slide-1 .flow-label { text-align: center; font-size: 0.82rem; font-weight: 600; color: #A78BFA; margin-bottom: 8px; }
+        #slide-1 .features { list-style: none; margin: 8px 0; }
+        #slide-1 .features li { padding: 5px 0; font-size: 0.88rem; color: #CCC; border-bottom: 1px solid #1A1A1A; }
+        #slide-1 .example-box { background: #0F1419; border-left: 3px solid #EC4899; padding: 8px 10px; margin-top: 10px; font-size: 0.78rem; color: #BBB; line-height: 1.4; }
+        #slide-1 .example-box strong { color: #F472B6; font-weight: 600; }
+        #slide-1 .transform-btn { display: block; margin: 10px auto; padding: 9px 32px; font-size: 0.85rem; font-weight: 500; background: transparent; color: #60A5FA; border: 2px solid #60A5FA; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; text-transform: uppercase; }
+        #slide-1 .transform-btn:hover { background: #60A5FA; color: #000; }
+        #slide-1 .pillars { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; grid-template-columns: repeat(4, 1fr); gap: 14px; background: #000; padding: 14px; z-index: 10; align-content: start; }
+        #slide-1 .pillars.visible { display: grid; animation: s1fadeIn 0.5s ease; }
+        @keyframes s1fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #slide-1 .pillars-header { grid-column: 1 / -1; text-align: center; margin-bottom: 10px; }
+        #slide-1 .pillars-header h3 { font-size: 1.25rem; font-weight: 300; color: #A78BFA; margin-bottom: 3px; }
+        #slide-1 .pillars-header p { color: #666; font-size: 0.8rem; }
+        #slide-1 .pillar { background: #0A0A0A; border: 1px solid #333; padding: 14px 12px; cursor: pointer; transition: all 0.3s; position: relative; min-height: 160px; display: flex; flex-direction: column; }
+        #slide-1 .pillar::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+        #slide-1 .pillar:nth-child(2)::before { background: #3B82F6; }
+        #slide-1 .pillar:nth-child(3)::before { background: #8B5CF6; }
+        #slide-1 .pillar:nth-child(4)::before { background: #EC4899; }
+        #slide-1 .pillar:nth-child(5)::before { background: #F59E0B; }
+        #slide-1 .pillar:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(96,165,250,0.2); }
+        #slide-1 .pillar-icon { font-size: 2rem; margin-bottom: 12px; text-align: center; }
+        #slide-1 .pillar h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; text-align: center; }
+        #slide-1 .pillar:nth-child(2) h3 { color: #60A5FA; }
+        #slide-1 .pillar:nth-child(3) h3 { color: #A78BFA; }
+        #slide-1 .pillar:nth-child(4) h3 { color: #F472B6; }
+        #slide-1 .pillar:nth-child(5) h3 { color: #FBBF24; }
+        #slide-1 .pillar-detail { flex: 1; display: flex; flex-direction: column; }
+        #slide-1 .pillar p { font-size: 0.8rem; color: #AAA; line-height: 1.5; margin-bottom: 12px; flex: 1; }
+        #slide-1 .pillar-example { background: #000; border-left: 2px solid #60A5FA; padding: 10px; font-size: 0.75rem; color: #999; line-height: 1.4; margin-top: auto; }
+        #slide-1 .pillar:nth-child(2) .pillar-example { border-left-color: #60A5FA; }
+        #slide-1 .pillar:nth-child(3) .pillar-example { border-left-color: #A78BFA; }
+        #slide-1 .pillar:nth-child(4) .pillar-example { border-left-color: #F472B6; }
+        #slide-1 .pillar:nth-child(5) .pillar-example { border-left-color: #FBBF24; }
+        #slide-1 .pillar-example strong { color: inherit; font-weight: 600; }
+        #slide-1 .button-row { display: flex; gap: 16px; justify-content: center; margin: 10px 0; }
+        #slide-1 .game-btn { padding: 9px 28px; font-size: 0.85rem; font-weight: 500; background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%); color: #FFF; border: none; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; }
+        #slide-1 .game-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(96,165,250,0.3); }
+        #slide-1 .game-mode { display: none; }
+        #slide-1 .game-mode.active { display: block; }
+        #slide-1 .game-header { text-align: center; margin-bottom: 8px; }
+        #slide-1 .game-header h2 { font-size: 1.2rem; color: #A78BFA; margin-bottom: 4px; }
+        #slide-1 .game-header p { color: #999; font-size: 0.82rem; }
+        #slide-1 .game-board { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+        #slide-1 .drop-zone { background: #0A0A0A; border: 2px dashed #333; padding: 10px; min-height: 120px; border-radius: 6px; transition: all 0.3s; }
+        #slide-1 .drop-zone.drag-over { border-color: #60A5FA; background: #0F1419; }
+        #slide-1 .drop-zone.correct { border-color: #10B981; border-style: solid; }
+        #slide-1 .drop-zone.incorrect { border-color: #DC2626; border-style: solid; }
+        #slide-1 .zone-header { text-align: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #333; }
+        #slide-1 .zone-header h3 { font-size: 0.92rem; font-weight: 600; margin-bottom: 2px; }
+        #slide-1 .zone-header .icon { font-size: 1.2rem; margin-bottom: 2px; }
+        #slide-1 .trait-pool { background: #0A0A0A; border: 2px solid #A78BFA; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; }
+        #slide-1 .trait-pool h3 { text-align: center; color: #A78BFA; margin-bottom: 8px; font-size: 0.88rem; }
+        #slide-1 .traits-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        #slide-1 .trait-card { background: #1A1A1A; border: 1px solid #333; padding: 7px 10px; border-radius: 4px; cursor: grab; transition: all 0.3s; user-select: none; }
+        #slide-1 .trait-card:hover { border-color: #60A5FA; transform: translateY(-1px); }
+        #slide-1 .trait-card.dragging { opacity: 0.5; cursor: grabbing; }
+        #slide-1 .trait-card.placed { cursor: default; }
+        #slide-1 .trait-card.correct { border-color: #10B981; background: #0F1F19; }
+        #slide-1 .trait-card.incorrect { border-color: #DC2626; background: #1F0F0F; }
+        #slide-1 .trait-text { font-size: 0.8rem; color: #FFF; line-height: 1.3; }
+        #slide-1 .trait-feedback { margin-top: 5px; padding-top: 5px; border-top: 1px solid #333; font-size: 0.75rem; color: #999; display: none; }
+        #slide-1 .trait-card.correct .trait-feedback, #slide-1 .trait-card.incorrect .trait-feedback { display: block; }
+        #slide-1 .trait-feedback.correct-feedback { color: #10B981; }
+        #slide-1 .trait-feedback.incorrect-feedback { color: #DC2626; }
+        #slide-1 .game-actions { display: flex; gap: 10px; justify-content: center; }
+        #slide-1 .game-actions button { padding: 8px 22px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; }
+        #slide-1 .check-btn { background: #60A5FA; color: #000; }
+        #slide-1 .check-btn:hover { background: #3B82F6; }
+        #slide-1 .check-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        #slide-1 .reset-btn { background: #333; color: #FFF; }
+        #slide-1 .reset-btn:hover { background: #444; }
+        #slide-1 .back-btn { background: #A78BFA; color: #000; }
+        #slide-1 .back-btn:hover { background: #8B5CF6; }
+        #slide-1 .game-result { background: #0F1419; border: 2px solid #60A5FA; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 8px; display: none; }
+        #slide-1 .game-result.visible { display: block; }
+        #slide-1 .result-score { font-size: 1.8rem; font-weight: 600; color: #60A5FA; margin-bottom: 4px; }
+        #slide-1 .result-message { font-size: 0.9rem; color: #FFF; margin-bottom: 6px; }
+        #slide-1 .result-details { font-size: 0.82rem; color: #999; }
+        #slide-1 .key-takeaway { background: #0F1419; border-left: 4px solid #60A5FA; padding: 12px 16px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        #slide-1 .takeaway-text { flex: 1; font-size: 0.88rem; color: #CCC; line-height: 1.5; }
+        #slide-1 .takeaway-text strong { color: #60A5FA; font-weight: 600; margin-right: 8px; }
+        #slide-1 .copy-btn { padding: 8px 16px; background: transparent; color: #60A5FA; border: 2px solid #60A5FA; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.3s; white-space: nowrap; }
+        #slide-1 .copy-btn:hover { background: #60A5FA; color: #000; }
+        #slide-1 .copy-btn.copied { background: #10B981; border-color: #10B981; color: #FFF; }
+        #slide-1 .presentation-btn { display: none; }
+
+        /* ── Slide 2: ReAct Pattern ── */
+        #slide-2 .controls { display: grid; grid-template-columns: auto 1fr auto auto; gap: 20px; margin-bottom: 12px; padding: 12px 16px; background: #0A0A0A; border: 1px solid #333; align-items: center; }
+        #slide-2 button { padding: 9px 24px; font-size: 0.85rem; font-weight: 500; background: transparent; color: #60A5FA; border: 2px solid #60A5FA; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; text-transform: uppercase; }
+        #slide-2 button:hover:not(:disabled) { background: #60A5FA; color: #000; }
+        #slide-2 button:disabled { opacity: 0.3; cursor: not-allowed; border-color: #333; color: #666; }
+        #slide-2 select { padding: 9px 16px; font-size: 0.88rem; background: #0A0A0A; color: #FFF; border: 1px solid #333; cursor: pointer; }
+        #slide-2 .speed-control { display: flex; align-items: center; gap: 12px; }
+        #slide-2 .speed-control label { color: #999; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; }
+        #slide-2 input[type="range"] { width: 100px; height: 4px; background: #333; outline: none; -webkit-appearance: none; }
+        #slide-2 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #60A5FA; cursor: pointer; border-radius: 50%; }
+        #slide-2 .iteration-counter { font-size: 0.9rem; color: #999; text-align: right; }
+        #slide-2 .iteration-counter span { color: #60A5FA; font-weight: 600; }
+        #slide-2 .main-grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; }
+        #slide-2 .diagram-container { display: flex; align-items: center; justify-content: center; background: #0A0A0A; border: 1px solid #333; padding: 12px; height: 300px; }
+        #slide-2 .step-log { background: #0A0A0A; border: 1px solid #333; padding: 14px; height: 300px; overflow-y: auto; }
+        #slide-2 .step-log::-webkit-scrollbar { width: 8px; }
+        #slide-2 .step-log::-webkit-scrollbar-track { background: #000; }
+        #slide-2 .step-log::-webkit-scrollbar-thumb { background: #333; }
+        #slide-2 .step-log h3 { font-size: 1.3rem; font-weight: 300; color: #A78BFA; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em; }
+        #slide-2 .step-entry { background: #000; border-left: 3px solid; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s; }
+        #slide-2 .step-entry:hover { transform: translateX(5px); background: #0F1419; }
+        #slide-2 .step-entry.reason { border-color: #3B82F6; }
+        #slide-2 .step-entry.act { border-color: #8B5CF6; }
+        #slide-2 .step-entry.observe { border-color: #EC4899; }
+        #slide-2 .step-entry.current { background: #0F1419; box-shadow: 0 0 20px rgba(96,165,250,0.2); }
+        #slide-2 .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        #slide-2 .step-number { background: #1A1A1A; padding: 4px 10px; font-family: 'Courier New', monospace; font-size: 0.8rem; color: #666; border: 1px solid #333; }
+        #slide-2 .step-type { font-weight: 600; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+        #slide-2 .step-entry.reason .step-type { color: #60A5FA; }
+        #slide-2 .step-entry.act .step-type { color: #A78BFA; }
+        #slide-2 .step-entry.observe .step-type { color: #F472B6; }
+        #slide-2 .step-content { font-size: 0.9rem; line-height: 1.5; color: #CCC; }
+        #slide-2 .safeguards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+        #slide-2 .safeguard { background: #0A0A0A; border: 1px solid; padding: 14px; position: relative; }
+        #slide-2 .safeguard::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+        #slide-2 .safeguard.green { border-color: #10B981; }
+        #slide-2 .safeguard.green::before { background: #10B981; }
+        #slide-2 .safeguard.blue { border-color: #3B82F6; }
+        #slide-2 .safeguard.blue::before { background: #3B82F6; }
+        #slide-2 .safeguard.pink { border-color: #EC4899; }
+        #slide-2 .safeguard.pink::before { background: #EC4899; }
+        #slide-2 .safeguard h4 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+        #slide-2 .safeguard.green h4 { color: #10B981; }
+        #slide-2 .safeguard.blue h4 { color: #60A5FA; }
+        #slide-2 .safeguard.pink h4 { color: #F472B6; }
+        #slide-2 .safeguard p { font-size: 0.85rem; color: #999; line-height: 1.5; }
+        @keyframes s2pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.85; } }
+        #slide-2 .pulsing { animation: s2pulse 2s infinite; transform-origin: center; }
+
+        /* ── Slide 3: Execution Loop ── */
+        #slide-3 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+        #slide-3 button { padding: 8px 16px; font-size: 0.78rem; font-weight: 500; background: transparent; color: #60A5FA; border: 2px solid #60A5FA; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; text-transform: uppercase; }
+        #slide-3 button:hover:not(:disabled) { background: #60A5FA; color: #000; }
+        #slide-3 button:disabled { opacity: 0.3; cursor: not-allowed; border-color: #333; color: #666; }
+        #slide-3 button.failure { color: #F472B6; border-color: #F472B6; }
+        #slide-3 button.failure:hover:not(:disabled) { background: #F472B6; color: #000; }
+        #slide-3 button.reset { color: #10B981; border-color: #10B981; }
+        #slide-3 button.reset:hover { background: #10B981; color: #000; }
+        #slide-3 .pipeline { background: #0A0A0A; border: 1px solid #333; padding: 16px; margin-bottom: 14px; }
+        #slide-3 .stages { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+        #slide-3 .stage { flex: 1; background: #1A1A1A; border: 2px solid #333; padding: 14px 8px; text-align: center; position: relative; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        #slide-3 .stage.active { border-color: #60A5FA; background: #0F1419; box-shadow: 0 0 20px rgba(96,165,250,0.3); transform: scale(1.05); }
+        #slide-3 .stage.success { border-color: #10B981; background: #0F1419; transform: scale(1); }
+        #slide-3 .stage.error { border-color: #F472B6; background: #1A0A0F; animation: s3shake 0.5s; }
+        @keyframes s3shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        #slide-3 .stage-number { font-size: 0.8rem; color: #666; font-family: 'Courier New', monospace; margin-bottom: 8px; }
+        #slide-3 .stage-name { font-size: 1rem; font-weight: 600; color: #FFF; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+        #slide-3 .stage-icon { font-size: 1.5rem; margin-bottom: 6px; }
+        #slide-3 .stage-metric { font-size: 0.75rem; color: #999; margin-top: 8px; }
+        #slide-3 .stage-metric.highlight { color: #60A5FA; font-weight: 600; }
+        #slide-3 .arrow { font-size: 2rem; color: #A78BFA; flex-shrink: 0; }
+        #slide-3 .arrow.active { color: #60A5FA; animation: s3pulse 1s infinite; }
+        @keyframes s3pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #slide-3 .status-message { background: #0F1419; border-left: 3px solid #60A5FA; padding: 15px 20px; font-size: 0.9rem; color: #CCC; line-height: 1.6; }
+        #slide-3 .status-message.error { border-color: #F472B6; background: #1A0A0F; }
+        #slide-3 .status-message strong { color: #60A5FA; font-weight: 600; }
+        #slide-3 .status-message.error strong { color: #F472B6; }
+        #slide-3 .metrics-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 0; }
+        #slide-3 .metric-card { background: #0A0A0A; border: 1px solid #333; padding: 12px; text-align: center; }
+        #slide-3 .metric-value { font-size: 1.3rem; font-weight: 600; color: #60A5FA; margin-bottom: 3px; }
+        #slide-3 .metric-label { font-size: 0.72rem; color: #999; text-transform: uppercase; letter-spacing: 0.05em; }
+        #slide-3 .failure-info { background: #1A0A0F; border: 2px solid #F472B6; padding: 12px 16px; margin-top: 10px; display: none; }
+        #slide-3 .failure-info.visible { display: block; }
+        #slide-3 .failure-info h3 { color: #F472B6; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+        #slide-3 .failure-info p { color: #CCC; font-size: 0.82rem; line-height: 1.5; margin-bottom: 6px; }
+        #slide-3 .failure-info ul { list-style: none; padding-left: 0; }
+        #slide-3 .failure-info li { color: #AAA; font-size: 0.78rem; padding: 3px 0 3px 16px; position: relative; }
+        #slide-3 .failure-info li:before { content: '→'; position: absolute; left: 0; color: #F472B6; }
+        #slide-3 .disclaimer { background: #0F1419; border-left: 3px solid #666; padding: 8px 12px; margin-top: 10px; font-size: 0.72rem; color: #999; line-height: 1.4; }
+        #slide-3 .disclaimer strong { color: #CCC; }
+    </style>
+</head>
+<body>
+    <!-- Stepper -->
+    <div class="stepper">
+        <button class="step active" id="btn-0" onclick="goTo(0)">
+            <span class="num">1</span> Traditional AI vs Agentic
+        </button>
+        <span class="sep">→</span>
+        <button class="step" id="btn-1" onclick="goTo(1)">
+            <span class="num">2</span> ReAct Pattern
+        </button>
+        <span class="sep">→</span>
+        <button class="step" id="btn-2" onclick="goTo(2)">
+            <span class="num">3</span> Agentic Execution Loop
+        </button>
+    </div>
+
+    <div class="slides-wrap">
+
+        <!-- ═══ SLIDE 1: Traditional vs Agentic ═══ -->
+        <div class="slide active" id="slide-1">
+            <div class="container">
+                <button class="presentation-btn" id="presentationModeBtn" onclick="s1.togglePresentation()">Presentation Mode</button>
+                <h1>Traditional AI vs Agentic Systems</h1>
+                <p class="subtitle">Understanding the fundamental architectural shift</p>
+
+                <div class="content-area">
+                    <div class="comparison-grid">
+                        <div class="box">
+                            <h2>Traditional AI</h2>
+                            <div class="flow-diagram">
+                                <div class="flow-box">📥</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box">⚙️</div>
+                                <div class="arrow">→</div>
+                                <div class="flow-box">📤</div>
+                            </div>
+                            <p class="flow-label">Input → Process → Output</p>
+                            <ul class="features">
+                                <li>Human-driven execution</li>
+                                <li>Single-turn interaction</li>
+                                <li>Reactive by design</li>
+                                <li>Stateless architecture</li>
+                            </ul>
+                            <div class="example-box">
+                                <strong>Example:</strong> "Summarize this document" → Summary generated → Task complete
+                            </div>
+                        </div>
+                        <div class="box">
+                            <h2>Agentic AI</h2>
+                            <svg width="100%" height="158" viewBox="0 0 360 158" style="display:block;margin:8px auto 0;">
+                                <defs>
+                                    <marker id="s1-arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                                        <polygon points="0 1, 8 4, 0 7" fill="#A78BFA"/>
+                                    </marker>
+                                </defs>
+                                <!-- Circles -->
+                                <circle cx="60" cy="70" r="38" fill="rgba(59,130,246,0.09)" stroke="#3B82F6" stroke-width="1.5"/>
+                                <text x="60" y="70" text-anchor="middle" dominant-baseline="middle" fill="#60A5FA" font-size="12" font-weight="600">GOAL</text>
+                                <circle cx="180" cy="70" r="38" fill="rgba(139,92,246,0.09)" stroke="#8B5CF6" stroke-width="1.5"/>
+                                <text x="180" y="70" text-anchor="middle" dominant-baseline="middle" fill="#A78BFA" font-size="12" font-weight="600">PLAN</text>
+                                <circle cx="300" cy="70" r="38" fill="rgba(236,72,153,0.09)" stroke="#EC4899" stroke-width="1.5"/>
+                                <text x="300" y="70" text-anchor="middle" dominant-baseline="middle" fill="#F472B6" font-size="12" font-weight="600">EXECUTE</text>
+                                <!-- Forward arrows -->
+                                <line x1="99" y1="70" x2="141" y2="70" stroke="#A78BFA" stroke-width="1.5" marker-end="url(#s1-arrowhead)"/>
+                                <line x1="219" y1="70" x2="261" y2="70" stroke="#A78BFA" stroke-width="1.5" marker-end="url(#s1-arrowhead)"/>
+                                <!-- Return arc: cubic bezier, tangent at GOAL entry points straight UP -->
+                                <path d="M 300 108 C 300 148, 60 148, 60 108" stroke="#A78BFA" stroke-width="1.5" fill="none" marker-end="url(#s1-arrowhead)"/>
+                                <text x="180" y="150" text-anchor="middle" fill="#8B7EC8" font-size="10" font-weight="500" letter-spacing="1">ADAPT &amp; LOOP</text>
+                            </svg>
+                            <p class="flow-label">Goal → Plan → Execute → Adapt</p>
+                            <ul class="features">
+                                <li>Autonomous operation</li>
+                                <li>Multi-step workflows</li>
+                                <li>Proactive decision-making</li>
+                                <li>Stateful with context</li>
+                            </ul>
+                            <div class="example-box">
+                                <strong>Example:</strong> "Improve customer retention" → Analyze patterns → Identify at-risk → Proactive outreach → Monitor → Adapt strategy
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pillars" class="pillars">
+                        <div class="pillars-header">
+                            <h3>Four Pillars of Agency</h3>
+                            <p>All four required for true agentic behavior</p>
+                        </div>
+                        <div class="pillar"><div class="pillar-icon">🤖</div><h3>Autonomy</h3><div class="pillar-detail"><p>Operates without constant human intervention. Makes decisions within defined boundaries.</p><div class="pillar-example"><strong>Example:</strong> Agent monitors systems 24/7, automatically remedies routine issues</div></div></div>
+                        <div class="pillar"><div class="pillar-icon">⚡</div><h3>Reactivity</h3><div class="pillar-detail"><p>Responds appropriately to environmental changes. Perceives context and adapts behavior.</p><div class="pillar-example"><strong>Example:</strong> Detects API latency spike, automatically scales infrastructure</div></div></div>
+                        <div class="pillar"><div class="pillar-icon">🎯</div><h3>Proactivity</h3><div class="pillar-detail"><p>Takes initiative to achieve goals and anticipates future needs.</p><div class="pillar-example"><strong>Example:</strong> Predicts customer churn 60 days early, initiates engagement</div></div></div>
+                        <div class="pillar"><div class="pillar-icon">🤝</div><h3>Social Ability</h3><div class="pillar-detail"><p>Interacts effectively with other agents, systems, and humans.</p><div class="pillar-example"><strong>Example:</strong> Coordinates with billing agent, updates CRM, notifies team</div></div></div>
+                    </div>
+                </div>
+
+                <div class="key-takeaway">
+                    <div class="takeaway-text"><strong>Key Takeaway:</strong> Agentic AI autonomously pursues goals through iterative loops, unlike traditional AI's single-turn responses. All four pillars — autonomy, reactivity, proactivity, and social ability — are required for true agency.</div>
+                    <button class="copy-btn" onclick="s1.copyTakeaway()">Copy</button>
+                </div>
+
+                <div class="button-row" id="learnButtons">
+                    <button class="transform-btn" onclick="s1.togglePillars()"><span id="btnText">Show Four Pillars of Agency</span></button>
+                    <button class="game-btn" onclick="s1.startGame()">Test Your Understanding</button>
+                </div>
+
+                <div id="gameMode" class="game-mode">
+                    <div class="game-header"><h2>🎮 AI Trait Sorter</h2><p>Drag each trait to the correct category. Get 8/10 correct to pass!</p></div>
+                    <div class="trait-pool" id="traitPool"><h3>Drag traits below ↓</h3><div class="traits-grid" id="traitsGrid"></div></div>
+                    <div class="game-board">
+                        <div class="drop-zone" id="traditionalZone" data-type="traditional"><div class="zone-header"><div class="icon">📥</div><h3>Traditional AI</h3></div><div class="drop-area" id="traditionalDropArea"></div></div>
+                        <div class="drop-zone" id="agenticZone" data-type="agentic"><div class="zone-header"><div class="icon">🔄</div><h3>Agentic AI</h3></div><div class="drop-area" id="agenticDropArea"></div></div>
+                    </div>
+                    <div class="game-result" id="gameResult"><div class="result-score" id="resultScore">8/10</div><div class="result-message" id="resultMessage"></div><div class="result-details" id="resultDetails"></div></div>
+                    <div class="game-actions">
+                        <button class="reset-btn" onclick="s1.resetGame()">↻ Reset</button>
+                        <button class="check-btn" id="checkButton" onclick="s1.checkAnswers()" disabled>Check Answers</button>
+                        <button class="back-btn" onclick="s1.exitGame()">← Back to Learn</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SLIDE 2: ReAct Pattern ═══ -->
+        <div class="slide" id="slide-2">
+            <div class="container">
+                <h1>ReAct Pattern: The Core Loop</h1>
+                <p class="subtitle"><strong>RE</strong>ASON → <strong>ACT</strong> → <strong>OBSERVE</strong> → Repeat</p>
+                <div class="controls">
+                    <button id="playBtn" onclick="s2.togglePlay()">Play</button>
+                    <select id="scenarioSelect" onchange="s2.changeScenario()">
+                        <option value="devops">DevOps Incident Response</option>
+                        <option value="support">Customer Support</option>
+                    </select>
+                    <div class="speed-control">
+                        <label>Speed</label>
+                        <input type="range" id="speedSlider" min="0.5" max="2" step="0.5" value="1" onchange="s2.updateSpeed()">
+                        <span id="speedValue" style="color:#60A5FA;font-weight:600;">1x</span>
+                    </div>
+                    <div class="iteration-counter">Iteration <span id="iteration">1</span> / <span id="totalIterations">3</span></div>
+                </div>
+                <div class="main-grid">
+                    <div class="diagram-container">
+                        <svg id="diagram" width="320" height="320" viewBox="0 0 450 450">
+                            <defs>
+                                <marker id="s2-arrow" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+                                    <polygon points="0 0, 12 5, 0 10" fill="#A78BFA"/>
+                                </marker>
+                            </defs>
+                            <g id="reasonGroup"><circle cx="225" cy="90" r="60" fill="none" stroke="#3B82F6" stroke-width="2"/><text x="225" y="98" text-anchor="middle" fill="#60A5FA" font-size="18" font-weight="600">REASON</text></g>
+                            <line x1="258" y1="140" x2="292" y2="190" stroke="#A78BFA" stroke-width="3" marker-end="url(#s2-arrow)"/>
+                            <g id="actGroup"><circle cx="325" cy="240" r="60" fill="none" stroke="#8B5CF6" stroke-width="2"/><text x="325" y="248" text-anchor="middle" fill="#A78BFA" font-size="18" font-weight="600">ACT</text></g>
+                            <line x1="265" y1="240" x2="185" y2="240" stroke="#A78BFA" stroke-width="3" marker-end="url(#s2-arrow)"/>
+                            <g id="observeGroup"><circle cx="125" cy="240" r="60" fill="none" stroke="#EC4899" stroke-width="2"/><text x="125" y="248" text-anchor="middle" fill="#F472B6" font-size="18" font-weight="600">OBSERVE</text></g>
+                            <line x1="158" y1="190" x2="192" y2="140" stroke="#A78BFA" stroke-width="3" marker-end="url(#s2-arrow)"/>
+                            <text x="225" y="380" text-anchor="middle" fill="#666" font-size="12">Continuous Execution Loop</text>
+                        </svg>
+                    </div>
+                    <div class="step-log"><h3>Execution Log</h3><div id="stepLog"></div></div>
+                </div>
+                <div class="safeguards">
+                    <div class="safeguard green"><h4>Max Iterations</h4><p>Limits loop count (typically 5–20) to prevent runaway execution</p></div>
+                    <div class="safeguard blue"><h4>Stopping Condition</h4><p>Detects goal achievement or terminal state</p></div>
+                    <div class="safeguard pink"><h4>Error Handler</h4><p>Escalates blockers to human oversight</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SLIDE 3: Execution Loop ═══ -->
+        <div class="slide" id="slide-3">
+            <div class="container">
+                <h1>Agentic Execution Loop</h1>
+                <p class="subtitle">End-to-end pipeline with failure mode analysis</p>
+                <div class="controls">
+                    <select id="modelSelector" onchange="s3.updateModelMetrics()" style="padding:10px;background:#1A1A1A;border:2px solid #60A5FA;color:#FFF;font-size:0.9rem;cursor:pointer;margin-right:15px;">
+                        <option value="gpt4o">GPT-4o</option>
+                        <option value="claude-sonnet" selected>Claude Sonnet</option>
+                        <option value="llama31">Llama 3.1</option>
+                    </select>
+                    <button id="normalBtn" onclick="s3.runNormal()">Run Success Flow</button>
+                    <button class="failure" onclick="s3.runFailure('context')">Simulate Context Failure</button>
+                    <button class="failure" onclick="s3.runFailure('tool')">Simulate Tool Error</button>
+                    <button class="failure" onclick="s3.runFailure('loop')">Simulate Loop Exhaustion</button>
+                    <button class="failure" onclick="s3.runFailure('validation')">Simulate Validation Failure</button>
+                    <button class="reset" onclick="s3.reset()">Reset Pipeline</button>
+                </div>
+                <div class="pipeline">
+                    <div class="stages">
+                        <div class="stage" id="stage1"><div class="stage-number">STAGE 1</div><div class="stage-icon">📥</div><div class="stage-name">Input</div><div class="stage-metric" id="metric1">—</div></div>
+                        <div class="arrow" id="arrow1">→</div>
+                        <div class="stage" id="stage2"><div class="stage-number">STAGE 2</div><div class="stage-icon">🔍</div><div class="stage-name">Context Assembly</div><div class="stage-metric" id="metric2">—</div></div>
+                        <div class="arrow" id="arrow2">→</div>
+                        <div class="stage" id="stage3"><div class="stage-number">STAGE 3</div><div class="stage-icon">🔄</div><div class="stage-name">ReAct Loop</div><div class="stage-metric" id="metric3">—</div></div>
+                        <div class="arrow" id="arrow3">→</div>
+                        <div class="stage" id="stage4"><div class="stage-number">STAGE 4</div><div class="stage-icon">💾</div><div class="stage-name">Memory Update</div><div class="stage-metric" id="metric4">—</div></div>
+                        <div class="arrow" id="arrow4">→</div>
+                        <div class="stage" id="stage5"><div class="stage-number">STAGE 5</div><div class="stage-icon">📤</div><div class="stage-name">Output</div><div class="stage-metric" id="metric5">—</div></div>
+                    </div>
+                    <div class="status-message" id="statusMessage"><strong>Ready:</strong> Click a button to run the execution pipeline or simulate failure modes.</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card"><div class="metric-value" id="totalTime">—</div><div class="metric-label">Total Time</div></div>
+                    <div class="metric-card"><div class="metric-value" id="totalTokens">—</div><div class="metric-label">Total Tokens</div></div>
+                    <div class="metric-card"><div class="metric-value" id="iterations">—</div><div class="metric-label">Iterations</div></div>
+                    <div class="metric-card"><div class="metric-value" id="toolCalls">—</div><div class="metric-label">Tool Calls</div></div>
+                    <div class="metric-card"><div class="metric-value" id="totalCost">—</div><div class="metric-label">Est. Cost</div></div>
+                </div>
+                <div class="failure-info" id="failureInfo"><h3 id="failureTitle">Failure Details</h3><p id="failureDesc"></p><ul id="failureSteps"></ul></div>
+                <div class="disclaimer"><strong>Note:</strong> Metrics shown are illustrative examples. Actual token counts, latency, and costs vary based on model, task complexity, and infrastructure.</div>
+            </div>
+        </div>
+
+    </div><!-- end slides-wrap -->
+
+    <!-- ═══ Stepper JS ═══ -->
+    <script>
+        let activeSlide = 0;
+        function goTo(i) {
+            document.getElementById('slide-' + (activeSlide + 1)).classList.remove('active');
+            document.getElementById('btn-' + activeSlide).classList.remove('active');
+            if (i > activeSlide) document.getElementById('btn-' + activeSlide).classList.add('done');
+            else document.getElementById('btn-' + activeSlide).classList.remove('done');
+            activeSlide = i;
+            document.getElementById('slide-' + (i + 1)).classList.add('active');
+            document.getElementById('btn-' + i).classList.add('active');
+            document.getElementById('btn-' + i).classList.remove('done');
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowRight' && activeSlide < 2) goTo(activeSlide + 1);
+            if (e.key === 'ArrowLeft' && activeSlide > 0) goTo(activeSlide - 1);
+        });
+    </script>
+
+    <!-- ═══ Slide 1 JS ═══ -->
+    <script>
+    const s1 = (() => {
+        let pillarsVisible = false;
+        let presentationMode = false;
+        const traits = [
+            { text: "Waits for explicit human instructions", type: "traditional", feedback: "Traditional AI is human-driven, requiring prompts for each action." },
+            { text: "Stateless - forgets context after each interaction", type: "traditional", feedback: "Traditional AI typically doesn't maintain conversation history." },
+            { text: "Single-turn question & answer", type: "traditional", feedback: "Traditional AI completes tasks in one interaction cycle." },
+            { text: "Human triggers every action", type: "traditional", feedback: "Traditional AI is purely reactive to human input." },
+            { text: "Follows fixed, predetermined workflow", type: "traditional", feedback: "Traditional AI executes pre-programmed logic without deviation." },
+            { text: "Takes initiative to achieve goals", type: "agentic", feedback: "Agentic AI proactively works toward objectives without constant prompting." },
+            { text: "Maintains context across multiple interactions", type: "agentic", feedback: "Agentic systems are stateful, remembering prior conversations." },
+            { text: "Executes multi-step workflows autonomously", type: "agentic", feedback: "Agentic AI can chain multiple operations to reach a goal." },
+            { text: "Adapts strategy based on results", type: "agentic", feedback: "Agentic systems observe outcomes and adjust their approach." },
+            { text: "Coordinates with other agents/systems", type: "agentic", feedback: "Agentic AI demonstrates social ability through inter-agent communication." }
+        ];
+        let gameState = { placements: {}, checked: false };
+        let draggedElement = null;
+
+        function togglePillars() {
+            const pillars = document.getElementById('pillars');
+            const btnText = document.getElementById('btnText');
+            pillarsVisible = !pillarsVisible;
+            if (pillarsVisible) { pillars.classList.add('visible'); btnText.textContent = 'Hide Pillars'; }
+            else { pillars.classList.remove('visible'); btnText.textContent = 'Show Four Pillars of Agency'; }
+        }
+        function togglePresentation() {
+            presentationMode = !presentationMode;
+            document.getElementById('slide-1').classList.toggle('presentation-mode');
+            document.getElementById('presentationModeBtn').textContent = presentationMode ? 'Exit Presentation' : 'Presentation Mode';
+        }
+        function copyTakeaway() {
+            const text = "Agentic AI autonomously pursues goals through iterative loops, unlike traditional AI's single-turn responses. All four pillars - autonomy, reactivity, proactivity, and social ability - are required for true agency.";
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('#slide-1 .copy-btn');
+                btn.textContent = 'Copied!'; btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+            });
+        }
+        function startGame() {
+            document.querySelector('#slide-1 .content-area').style.display = 'none';
+            document.getElementById('learnButtons').style.display = 'none';
+            document.getElementById('gameMode').classList.add('active');
+            loadTraits();
+        }
+        function loadTraits() {
+            const grid = document.getElementById('traitsGrid');
+            grid.innerHTML = '';
+            const shuffled = [...traits].sort(() => Math.random() - 0.5);
+            shuffled.forEach((trait, index) => {
+                const card = document.createElement('div');
+                card.className = 'trait-card'; card.draggable = true;
+                card.dataset.id = index; card.dataset.type = trait.type;
+                card.innerHTML = `<div class="trait-text">${trait.text}</div><div class="trait-feedback"></div>`;
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                grid.appendChild(card);
+            });
+            setupDropZones();
+            gameState = { placements: {}, checked: false };
+            document.getElementById('checkButton').disabled = true;
+            document.getElementById('gameResult').classList.remove('visible');
+        }
+        function setupDropZones() {
+            document.querySelectorAll('#slide-1 .drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+        function handleDragStart(e) { if (gameState.checked) return; draggedElement = e.target; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+        function handleDragEnd(e) { e.target.classList.remove('dragging'); }
+        function handleDragOver(e) { if (gameState.checked) return; e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        function handleDrop(e) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            if (gameState.checked || !draggedElement) return;
+            const dropZone = e.currentTarget;
+            const dropArea = dropZone.querySelector('.drop-area');
+            const zoneType = dropZone.dataset.type;
+            if (draggedElement.parentElement.classList.contains('drop-area')) delete gameState.placements[draggedElement.dataset.id];
+            dropArea.appendChild(draggedElement);
+            gameState.placements[draggedElement.dataset.id] = zoneType;
+            draggedElement.classList.add('placed');
+            document.getElementById('checkButton').disabled = Object.keys(gameState.placements).length !== traits.length;
+        }
+        function checkAnswers() {
+            gameState.checked = true; let correct = 0;
+            Object.keys(gameState.placements).forEach(id => {
+                const card = document.querySelector(`#slide-1 [data-id="${id}"]`);
+                const placedIn = gameState.placements[id];
+                const correctType = card.dataset.type;
+                const traitData = traits.find(t => t.type === correctType && t.text === card.querySelector('.trait-text').textContent);
+                if (placedIn === correctType) {
+                    card.classList.add('correct');
+                    card.querySelector('.trait-feedback').textContent = '✓ Correct! ' + traitData.feedback;
+                    card.querySelector('.trait-feedback').classList.add('correct-feedback'); correct++;
+                } else {
+                    card.classList.add('incorrect');
+                    card.querySelector('.trait-feedback').textContent = '✗ Wrong. ' + traitData.feedback;
+                    card.querySelector('.trait-feedback').classList.add('incorrect-feedback');
+                }
+                card.draggable = false;
+            });
+            document.getElementById('traditionalZone').classList.add(correct >= 8 ? 'correct' : 'incorrect');
+            document.getElementById('agenticZone').classList.add(correct >= 8 ? 'correct' : 'incorrect');
+            const pct = Math.round((correct / traits.length) * 100);
+            document.getElementById('resultScore').textContent = `${correct}/${traits.length}`;
+            document.getElementById('resultMessage').textContent = pct >= 80 ? '🎉 Excellent!' : pct >= 60 ? '👍 Good job! Review the feedback.' : '📚 Keep learning!';
+            document.getElementById('resultDetails').textContent = `You correctly classified ${pct}% of traits.`;
+            document.getElementById('gameResult').classList.add('visible');
+            document.getElementById('checkButton').disabled = true;
+        }
+        function resetGame() {
+            document.querySelectorAll('#slide-1 .trait-card').forEach(card => {
+                card.classList.remove('correct', 'incorrect', 'placed'); card.draggable = true;
+                card.querySelector('.trait-feedback').textContent = '';
+                card.querySelector('.trait-feedback').classList.remove('correct-feedback', 'incorrect-feedback');
+            });
+            document.querySelectorAll('#slide-1 .drop-zone').forEach(z => z.classList.remove('correct', 'incorrect'));
+            gameState = { placements: {}, checked: false };
+            document.getElementById('checkButton').disabled = true;
+            document.getElementById('gameResult').classList.remove('visible');
+            loadTraits();
+        }
+        function exitGame() {
+            document.querySelector('#slide-1 .content-area').style.display = 'block';
+            document.getElementById('learnButtons').style.display = 'flex';
+            document.getElementById('gameMode').classList.remove('active');
+        }
+        return { togglePillars, togglePresentation, copyTakeaway, startGame, resetGame, checkAnswers, exitGame };
+    })();
+    </script>
+
+    <!-- ═══ Slide 2 JS ═══ -->
+    <script>
+    const s2 = (() => {
+        const scenarios = {
+            devops: [
+                {type:'reason', content:'API latency spike detected. Need to check logs.'},
+                {type:'act', content:'Execute: query_logs(service="api", last="5min")'},
+                {type:'observe', content:'Logs show database connection timeout errors'},
+                {type:'reason', content:'Database issue. Need to check DB health.'},
+                {type:'act', content:'Execute: check_db_health()'},
+                {type:'observe', content:'Connection pool exhausted: 100/100 connections'},
+                {type:'reason', content:'Connection pool issue. Restart pool to resolve.'},
+                {type:'act', content:'Execute: restart_connection_pool()'},
+                {type:'observe', content:'Pool restarted. Latency normal. Issue resolved.'}
+            ],
+            support: [
+                {type:'reason', content:'Customer asks about order status. Need order details.'},
+                {type:'act', content:'Execute: get_order(customer_id, order_id)'},
+                {type:'observe', content:'Order #1234 shipped yesterday, tracking #ABC123'},
+                {type:'reason', content:'Have info. Formulate helpful response.'},
+                {type:'act', content:'Execute: send_response(message)'},
+                {type:'observe', content:'Customer satisfied. Conversation complete.'}
+            ]
+        };
+        let currentScenario = 'devops', currentStep = 0, isPlaying = false, speed = 1, intervalId = null;
+        let steps = scenarios[currentScenario];
+
+        function render() {
+            const log = document.getElementById('stepLog'); log.innerHTML = '';
+            steps.slice(0, currentStep + 1).forEach((step, idx) => {
+                const entry = document.createElement('div');
+                entry.className = `step-entry ${step.type} ${idx === currentStep ? 'current' : ''}`;
+                entry.innerHTML = `<div class="step-header"><span class="step-number">${idx + 1}</span><span class="step-type">${step.type}</span></div><div class="step-content">${step.content}</div>`;
+                log.appendChild(entry);
+            });
+            log.scrollTop = log.scrollHeight;
+            document.getElementById('iteration').textContent = Math.floor(currentStep / 3) + 1;
+            document.getElementById('totalIterations').textContent = Math.ceil(steps.length / 3);
+            ['reasonGroup','actGroup','observeGroup'].forEach(id => {
+                const g = document.getElementById(id); g.classList.remove('pulsing');
+                g.querySelector('circle').setAttribute('stroke-width', '2');
+            });
+            if (currentStep < steps.length) {
+                const g = document.getElementById(steps[currentStep].type + 'Group');
+                g.classList.add('pulsing'); g.querySelector('circle').setAttribute('stroke-width', '3');
+            }
+        }
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            if (isPlaying) { stopAnimation(); btn.textContent = 'Play'; }
+            else { if (currentStep >= steps.length - 1) currentStep = 0; startAnimation(); btn.textContent = 'Stop'; }
+        }
+        function startAnimation() {
+            isPlaying = true;
+            document.getElementById('scenarioSelect').disabled = true;
+            document.getElementById('speedSlider').disabled = true;
+            intervalId = setInterval(() => {
+                if (currentStep >= steps.length - 1) { stopAnimation(); document.getElementById('playBtn').textContent = 'Reset'; return; }
+                currentStep++; render();
+            }, 2000 / speed);
+            render();
+        }
+        function stopAnimation() {
+            isPlaying = false;
+            document.getElementById('scenarioSelect').disabled = false;
+            document.getElementById('speedSlider').disabled = false;
+            if (intervalId) { clearInterval(intervalId); intervalId = null; }
+            if (currentStep >= steps.length - 1) { currentStep = 0; render(); }
+        }
+        function changeScenario() {
+            stopAnimation(); currentScenario = document.getElementById('scenarioSelect').value;
+            steps = scenarios[currentScenario]; currentStep = 0;
+            document.getElementById('playBtn').textContent = 'Play'; render();
+        }
+        function updateSpeed() {
+            speed = parseFloat(document.getElementById('speedSlider').value);
+            document.getElementById('speedValue').textContent = speed + 'x';
+            if (isPlaying) { clearInterval(intervalId); intervalId = setInterval(() => { if (currentStep >= steps.length - 1) { stopAnimation(); return; } currentStep++; render(); }, 2000 / speed); }
+        }
+        render();
+        return { togglePlay, changeScenario, updateSpeed };
+    })();
+    </script>
+
+    <!-- ═══ Slide 3 JS ═══ -->
+    <script>
+    const s3 = (() => {
+        let isRunning = false, currentModel = 'claude-sonnet';
+        const modelMetrics = {
+            'gpt4o': { stage1:{time:'12ms',tokens:'~0'}, stage2:{time:'~350ms',tokens:'~3.5K'}, stage3:{time:'~2.3s',tokens:'~5.2K'}, stage4:{time:'~180ms',tokens:'~2.2K'}, stage5:{time:'~60ms',tokens:'~1.1K'}, totalTime:'~2.9s', totalTokens:'~12K', cost:'$0.024' },
+            'claude-sonnet': { stage1:{time:'12ms',tokens:'~0'}, stage2:{time:'~280ms',tokens:'~3K'}, stage3:{time:'~1.8s',tokens:'~5K'}, stage4:{time:'~140ms',tokens:'~2K'}, stage5:{time:'~50ms',tokens:'~1K'}, totalTime:'~2.3s', totalTokens:'~11K', cost:'$0.017' },
+            'llama31': { stage1:{time:'12ms',tokens:'~0'}, stage2:{time:'~450ms',tokens:'~3.2K'}, stage3:{time:'~2.8s',tokens:'~5.5K'}, stage4:{time:'~200ms',tokens:'~2.3K'}, stage5:{time:'~70ms',tokens:'~1.2K'}, totalTime:'~3.5s', totalTokens:'~12.2K', cost:'$0.002' }
+        };
+        const failureScenarios = {
+            context: { failStage:2, title:'Context Assembly Failure', desc:'Unable to retrieve sufficient context. Memory retrieval returned no relevant documents.', steps:['Vector search returned 0 results (similarity threshold too high)','Fallback to keyword search: partial results','Context window insufficient for task requirements','Agent escalates: "I don\'t have enough information to proceed"'], metrics:{stage1:{time:'12ms',tokens:'~0'},stage2:{time:'~600ms',tokens:'~500'}} },
+            tool: { failStage:3, title:'Tool Execution Error', desc:'ReAct loop encountered a tool failure. API returned 500 Internal Server Error.', steps:['Iteration 1: Reason → Act (call external_api)','Tool call failed: Connection timeout','Iteration 2: Reason → Retry with exponential backoff','Retry failed: API unavailable','Agent escalates: "External service is currently unavailable"'], metrics:{stage1:{time:'12ms',tokens:'~0'},stage2:{time:'~300ms',tokens:'~3K'},stage3:{time:'~12s',tokens:'~1.5K'}} },
+            loop: { failStage:3, title:'Loop Exhaustion', desc:'ReAct loop exceeded max iterations without reaching a stopping condition.', steps:['Iterations 1-5: Reason → Act → Observe (exploring solution space)','Iterations 6-8: Repeated similar actions (potential circular reasoning)','Iterations 9-10: Still no solution found','Max iterations reached: Safety limit triggered','Agent response: "Task too complex, breaking into subtasks recommended"'], metrics:{stage1:{time:'12ms',tokens:'~0'},stage2:{time:'~300ms',tokens:'~3K'},stage3:{time:'~8s',tokens:'~16K'}} },
+            validation: { failStage:5, title:'Output Validation Failure', desc:'Generated output failed validation checks before delivery to user.', steps:['Output generated: JSON response','Schema validation: FAILED (missing required field "user_id")','Guardrails check: PASSED','Business logic validation: FAILED (negative price value)','Agent retries generation with constraints','Retry successful on 2nd attempt'], metrics:{stage1:{time:'12ms',tokens:'~0'},stage2:{time:'~300ms',tokens:'~3K'},stage3:{time:'~2s',tokens:'~5K'},stage4:{time:'~150ms',tokens:'~2K'},stage5:{time:'~500ms',tokens:'~2K'}} }
+        };
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function updateModelMetrics() { currentModel = document.getElementById('modelSelector').value; }
+        function reset() {
+            isRunning = false;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`stage${i}`).className = 'stage';
+                document.getElementById(`metric${i}`).textContent = '—';
+                document.getElementById(`metric${i}`).className = 'stage-metric';
+                if (i < 5) document.getElementById(`arrow${i}`).className = 'arrow';
+            }
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').innerHTML = '<strong>Ready:</strong> Click a button to run the execution pipeline or simulate failure modes.';
+            document.getElementById('failureInfo').className = 'failure-info';
+            const m = modelMetrics[currentModel];
+            document.getElementById('totalTime').textContent = m.totalTime;
+            document.getElementById('totalTokens').textContent = m.totalTokens;
+            document.getElementById('iterations').textContent = '3';
+            document.getElementById('toolCalls').textContent = '5';
+            document.getElementById('totalCost').textContent = m.cost;
+        }
+        async function runNormal() {
+            if (isRunning) return; isRunning = true; reset();
+            document.getElementById('statusMessage').innerHTML = '<strong>Running:</strong> Processing request through full pipeline...';
+            const nm = modelMetrics[currentModel];
+            for (let i = 1; i <= 5; i++) {
+                const stage = document.getElementById(`stage${i}`), metric = document.getElementById(`metric${i}`);
+                const arrow = i < 5 ? document.getElementById(`arrow${i}`) : null;
+                stage.className = 'stage active'; if (arrow) arrow.className = 'arrow active';
+                await sleep(600);
+                const d = nm[`stage${i}`];
+                metric.innerHTML = `<span class="highlight">${d.time}</span> • ${d.tokens} tokens`;
+                stage.className = 'stage success'; if (arrow) arrow.className = 'arrow';
+                await sleep(200);
+            }
+            document.getElementById('statusMessage').innerHTML = '<strong>Success:</strong> Request completed successfully. Output delivered to user.';
+            document.getElementById('totalTime').textContent = '~2.5s'; document.getElementById('totalTokens').textContent = '~11K';
+            document.getElementById('iterations').textContent = '3'; document.getElementById('toolCalls').textContent = '5'; document.getElementById('totalCost').textContent = '~$0.05';
+            isRunning = false;
+        }
+        async function runFailure(type) {
+            if (isRunning) return; isRunning = true; reset();
+            const sc = failureScenarios[type];
+            document.getElementById('statusMessage').innerHTML = '<strong>Running:</strong> Processing request...';
+            for (let i = 1; i <= sc.failStage; i++) {
+                const stage = document.getElementById(`stage${i}`), metric = document.getElementById(`metric${i}`);
+                const arrow = i < 5 ? document.getElementById(`arrow${i}`) : null;
+                stage.className = 'stage active'; if (arrow) arrow.className = 'arrow active';
+                await sleep(600);
+                const d = sc.metrics[`stage${i}`];
+                metric.innerHTML = `<span class="highlight">${d.time}</span> • ${d.tokens} tokens`;
+                if (i === sc.failStage) { stage.className = 'stage error'; document.getElementById('statusMessage').className = 'status-message error'; document.getElementById('statusMessage').innerHTML = `<strong>Error:</strong> ${sc.desc}`; }
+                else stage.className = 'stage success';
+                if (arrow) arrow.className = 'arrow'; await sleep(200);
+            }
+            document.getElementById('failureTitle').textContent = sc.title;
+            document.getElementById('failureDesc').textContent = sc.desc;
+            const list = document.getElementById('failureSteps'); list.innerHTML = '';
+            sc.steps.forEach(s => { const li = document.createElement('li'); li.textContent = s; list.appendChild(li); });
+            document.getElementById('failureInfo').className = 'failure-info visible';
+            isRunning = false;
+        }
+        return { updateModelMetrics, reset, runNormal, runFailure };
+    })();
+    </script>
+
+</body>
+</html>

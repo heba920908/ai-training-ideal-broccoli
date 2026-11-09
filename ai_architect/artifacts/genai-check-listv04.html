@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+        // Checklist data - easily editable JSON structure
+        // Edit the data below to modify checklist items
+        const checklistItems = [
+  {
+    "id": 1,
+    "title": "Who is the customer?",
+    "description": "We should collect general information about the customer: information about the company and business stakeholders, the business domain, the availability of an SME from the client side for the full project time, and whether they already use LLM in their business.",
+    "rag": {
+      "green": "Not a complex business domain. EPAM has enough expertise in this business domain. There is an SME from the client side.",
+      "amber": "Complex business domain and EPAM does not have enough expertise in this business domain. There is an SME from the client side. The client has some experience in using LLM.",
+      "red": "Complex business domain, EPAM has no expertise in this business domain, the client has no SME from the client side. The client has no experience in using LLM."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>Customer is not always the end user. A customer can create a project for their employees or for their clients.</li><li>Even if EPAM has enough expertise in the client's business domain, we should find responsible persons on the client side to ensure the acceptance process.</li><li><span style=\"color:#d32f2f;\">The absence of an SME on the client side is almost always a red flag and a high likelihood of project failure.</span></li><li>Collect information about stakeholders and end users in advance to simplify the acceptance process at the end.</li><li>If the client is not yet using GenAI, this adds additional risks with obtaining the necessary approvals and infrastructure.</li></ul>"
+  },
+  {
+    "id": 2,
+    "title": "Who is the end user?",
+    "description": "Understand who the end users are: how technical they are, how many users will use the system (1–10, 10–100, 1000+), whether there are different user roles, whether they already have experience with GenAI and UX/UI expectations, and if they will be involved in development and testing.",
+    "rag": {
+      "green": "Reasonable count of users. End users are involved at least in the testing process.",
+      "amber": "A large number of users. No involvement of end users into the testing process.",
+      "red": "Unlimited count of users (for example, the application is available on the Internet). There are no end users or SMEs involved in the testing process."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>Customer is not always the end user. A customer can create a project for their employees or for their clients.</li><li>Many users understand GenAI based only on ChatGPT. Sometimes it is positive, sometimes negative.</li><li><span style=\"color:#d32f2f;\">Do not ask (business) end-users to be prompt engineers! Provide a default prompt set.</span></li><li>A large number of users means special token limits and possibly special pricing plans. Likely, a special LLM load balancer will be needed to switch the application between multiple LLM keys. This can significantly complicate the system. Check if it is possible to use the EPAM DIAL Load Balancer.</li></ul>"
+  },
+  {
+    "id": 3,
+    "title": "Budget and budget owner",
+    "description": "Who is the owner of the budget for the project? Is it IT-budget or business? Has it been allocated already?",
+    "rag": {
+      "green": "The budget is allocated and approved. There is a budget for LLM experiments and development.",
+      "amber": "The budget is allocated and defined, and it may be enough for PoC, but additional approval is required for MVP. There is no budget for LLM experiments and development.",
+      "red": "The budget is not allocated yet; there is no budget for LLM experiments and development."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>It is a risk if there is no clearly defined budget owner. For example, from a business point of view, all LLM-related projects are on the IT budget, but IT wants to have the budget from the business. Such a situation creates a risk for project execution.</li><li>Budget constraints may block the use of expensive models, which could be critical for the quality of the result.</li><li><span style=\"color:#d32f2f;\">It is necessary to carefully describe the budget allocation across milestones.</span> 80% of quality can be achieved in 20% of the time, but an additional 10% will cost 80% of the time, and another 10% may turn out to be impossible. Good quality of a simple PoC does not always mean the ability to scale it to production.</li></ul>"
+  },
+  {
+    "id": 4,
+    "title": "The project target/deliverable",
+    "description": "What is expected as the result – PoC, MVP, Prod? Depending on this, different resources and approaches to testing and acceptance are required. Of course, there are other important factors, such as whether the application will work within the corporate network or be accessible from the internet.",
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li><span style=\"color:#d32f2f;\">Even for PoC, we must manage client expectations and understand what the client expects as a result.</span></li><li>Should we provide (full) source code? List of prompts?</li><li>For MVP/Prod, it is necessary to plan the infrastructure in advance and ensure its availability.</li><li>The type of project will significantly impact many other criteria and risks.</li></ul>"
+  },
+  {
+    "id": 5,
+    "title": "Domain knowledge",
+    "description": "The non-deterministic nature of LLM models adds extra complexity to development. A clear understanding of the domain area is required: is there any domain-specific knowledge, is there an SME with the necessary knowledge, and does EPAM have the necessary domain expertise?",
+    "rag": {
+      "green": "EPAM has enough knowledge in domain or there is no special domain knowledge.",
+      "amber": "EPAM has not enough knowledge in domain, but there is SME on the client side.",
+      "red": "EPAM has not enough knowledge in domain and there is no SME on the client side."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li><span style=\"color:#d32f2f;\">Do not mix input data and domain knowledge.</span> Even if we have all the available input data, it may not be enough to achieve results if special knowledge is also needed, which exists only in the minds of certain people.</li><li>Even if EPAM has enough expertise in the client's business domain, we should find responsible persons on the client side to ensure the acceptance process.</li><li>Understanding the domain will allow us to create a test dataset for validation.</li></ul>"
+  },
+  {
+    "id": 6,
+    "title": "Business problem and ROI",
+    "description": "There is no big difference with non-LLM projects here: which problem you are aiming to solve, what you want to improve in this solution (cost, accuracy, speed, quality, etc.), how you will measure value and project success and what will improve, whether LLM is the optimal solution, and whether there is a manual process already and what is the cost of it (to use it as a cost baseline).",
+    "rag": {
+      "green": "There is a clearly defined business problem with defined value.",
+      "amber": "The business problem is clear, but the ROI is not defined.",
+      "red": "There is no business problem, only wishes like 'let's use LLM.' There is no vision on how to return the money."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>There is not much difference from regular projects, but LLM causes a lot of hype, and often projects start without understanding the goal or how LLM will help the business and turn into money.</li><li>In some cases, the goal could be 'using LLM itself as an investment in the future.' In such a case, this should be agreed upon before the project starts, and the business should not expect a return on monetary investments.</li><li>In some cases, the problem can be solved more effectively without using LLM. It is necessary to discuss the purpose of using LLM with the client.</li><li>LLM solution cost also contains API cost and/or infrastructure. On-prem solution can be more expensive than API.</li></ul>"
+  },
+  {
+    "id": 7,
+    "title": "Current solution (if it exists)",
+    "description": "What does the current solution look like? How and who is currently doing the same work?",
+    "rag": {
+      "green": "There is a clear understanding of how to do the necessary work manually or in another way. Using LLM improves the process.",
+      "amber": "The necessary work is being done, but the possibility of automation is unclear, a PoC is required. It is possible that the client has already tried to do similar work but without success. There is no process in place, the work will be done from scratch with the help of LLM.",
+      "red": "N/A"
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>The absence of an existing solution does not mean a red flag or the impossibility of completing the project, but the presence of an existing solution, for example, a person performing this work manually, significantly reduces risks.</li><li><span style=\"color:#d32f2f;\">The existing manual process can be used as a starting point for measuring process improvements. In many cases, it is better to sell performance, quality, or cost improvements relative to the existing process rather than full automation.</span></li><li>If the required process or task is already performed by a human, it significantly simplifies implementation. The work can be divided into parts and partially or fully replaced by LLM.</li><li>LLM projects are often characterized by high expectations regarding the current process. It is important to remember that, on one hand, humans can also make mistakes, and on the other hand, LLM results are not deterministic and may be erroneous in rare but unpredictable cases.</li></ul>"
+  },
+  {
+    "id": 8,
+    "title": "Input data",
+    "description": "How does the data look like? (documents, web, tables, etc.) How much data is there? Are there actual data available? (No actual data - close to failure)",
+    "rag": {
+      "green": "The data format is clear. It is clear how to obtain data that can be used for LLM processing. The model is capable of processing the data. There is no hidden knowledge required for application.",
+      "amber": "Some data requires pre-processing. For certain data, additional PoC is needed. But there is a clear understanding that the provided data is sufficient to achieve the desired result.",
+      "red": "The data format is unknown or requires complex processing. Some input information exists only in the heads of SMEs. There is no certainty that the provided data is sufficient."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>Modern multimodal models can process text, images, and sound. But even this may not be enough to fully read the input information. It is still difficult to accurately read technical diagrams, small maps, etc.</li><li>Some knowledge may be hidden in special terms, abbreviations, and specific project or domain vocabulary.</li><li>Often, additional input information is not obvious. For example, document versions or document dependencies.</li><li>If a person cannot perform the expected work, then LLM will also not be able to (here, human productivity is not considered).</li><li>If the input information is not sufficient for full operation, it might be possible to launch a pilot project and collect the necessary information (for example, queries to a chatbot).</li></ul>"
+  },
+  {
+    "id": 9,
+    "title": "Requirement's quality",
+    "description": "How precise are the requirements, or is it all abstract? It's not easy to validate the quality of requirements, but it can be critical for fixed-price projects. There is nothing specific here for LLM, except that due to high expectations and hype, it is usually more difficult to get good requirements and define quality metrics for LLM projects.",
+    "rag": {
+      "green": "The requirements are precise enough for implementation.",
+      "amber": "The requirements are not entirely precise but can be clarified during project execution. SMEs have been assigned to fully participate in the project for this purpose.",
+      "red": "The requirements are undefined or abstract. Potential risks are visible during project delivery."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>Due to high expectations and hype, it is usually more difficult to get good requirements and define quality metrics for LLM projects.</li><li>Due to high expectations for LLM, requirements are often overly ambitious. At least a minimal check of the realism of the requirements is needed before signing the contract.</li><li>Special attention should be paid to the requirements for responsibility for answers and possible hallucinations.</li><li>It is necessary to consider the possible degradation of models available via API and accordingly plan options for application support.</li></ul>"
+  },
+  {
+    "id": 10,
+    "title": "Responsibility",
+    "description": "Should expected solution be available in Internet or it's internal application? Who is responsible for hallucination? Who is responsible for compliance with laws/regulations? Do we have human in the loop?",
+    "rag": {
+      "green": "The application being developed is for internal users who are focused on business tasks and fully understand the responsibility for the result.",
+      "amber": "The application is not critical, and a certain percentage of incorrect answers is acceptable.",
+      "red": "100% quality of answers is expected for users from the Internet or unlimited count of users. The client takes full responsibility for the system's answers, and there is no human in the loop for answer validation."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>EPAM cannot be responsible for answers generated by LLM.</li><li><span style=\"color:#d32f2f;\">The ability to have a human in the loop significantly simplifies the development task.</span></li><li>Try to reduce areas where hallucinations are possible. For example, you might not need RAG and answer generation; advanced search, which is much more powerful than simple keyword search, might be enough.</li><li>Use an entity extraction solution instead of the typical Ask my data if answer quality above 90% is required.</li><li>Remember that currently, there is no solution for complete protection against prompt injection. Do not rely on protection through prompts.</li></ul>"
+  },
+  {
+    "id": 11,
+    "title": "Acceptance",
+    "description": "What would acceptance appear like - technical and business? How to ensure client trust in the result? How can the client verify the result? Is acceptance procedure defined in SOW?",
+    "rag": {
+      "green": "The acceptance criteria are clearly defined, agreed upon with the client, and documented in the contract.",
+      "amber": "The acceptance process, although not formally defined, is clearly understood. The client's expectations are reasonable and achievable.",
+      "red": "The acceptance criteria are undefined and unclear. The client's expectations are high and unmanageable."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>High expectations often arise or are sold for RAG projects (\"Ask my document\") and chatbots. The acceptance criterion is defined as \"99% correct answers,\" but there is no understanding of how exactly this 99% will be calculated. This is especially risky in the absence of a human in the process of validating answers before providing them to the user. Proper acceptance criteria for RAG or chatbots can, for example, be formulated as \"99% correct answers on a pre-formed dataset of questions.\" Such a dataset should be created and agreed upon with the client in advance and should include the most important business-related questions. Most often, these are the questions that bring real value to the client. A chatbot available on the internet and answering \"any\" questions looks particularly risky.</li><li>Even seemingly simple tasks like searching for data on websites can turn out to be complex due to the presence of lazy loading mechanisms or special authorization. Defining acceptance quality should also include requirements for the websites.</li><li>For LLM projects, the acceptance criteria may also include running costs (for example, per dialog or per one run).</li><li>No \"black box\" - try to find way to explain answer: explanation, and citations or references to the original documents.</li><li>You must think about the acceptance procedure in advance and ideally save it into the SOW.</li></ul>"
+  },
+  {
+    "id": 12,
+    "title": "Feedbacks and quality improvement cycle",
+    "description": "Most of the time, it is not possible to create a system that immediately meets all quality criteria, so it is important, first, to have the ability to collect feedback from users, and second, to have the technical and architectural capability to improve quality.",
+    "rag": {
+      "green": "A feedback and quality control mechanism is planned or implemented. The system includes logging, which allows potential issues to be identified and improved.",
+      "amber": "There is non-automatic feedback collection, for example, through periodic user surveys or an escalation system in case of quality issues.",
+      "red": "Feedback collection is not planned. 100% quality is expected from the very beginning of the project."
+    },
+    "status": null,
+    "notes": "<p><strong>Notes</strong></p><ul><li>When implementing chatbots, clients often do not understand which questions will be the most important. In such cases, it is worth collecting questions asked by users over a certain period and then analyzing them to identify the most frequent ones. However, it is important to remember privacy and GDPR. Logs should not store personal or sensitive information.</li><li>It is advisable to create an application architecture that allows for systematic and planned quality improvements.</li></ul>"
+  },
+  {
+    "id": 13,
+    "title": "Additional questions",
+  "description": "<ul><li>Who is responsible for IP?</li><li>Should we share or provide the full source code of the solution?</li><li>What exactly do we sell: FTE, license, source code, tokens, or a mixed solution?</li></ul>",
+    "status": null,
+    "notes": ""
+  }
+];
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Project Checklist - Command Center</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 0;
+            color: #1d1d1f;
+        }
+
+        .container {
+            max-width: 1800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #ffffff;
+            border-radius: 0;
+            padding: 24px 32px;
+            margin-bottom: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-bottom: 1px solid #e5e5e7;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            white-space: nowrap;
+            font-size: 13px;
+            color: #86868b;
+            align-self: flex-start;
+        }
+
+        .genai-failures-btn {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #0071e3, #5e5ce6);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+            white-space: normal;
+            max-width: 260px;
+            text-align: center;
+        }
+
+        .genai-failures-btn:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .genai-failures-btn:active {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1d1d1f;
+            letter-spacing: -0.5px;
+        }
+
+        .summary {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .summary-item:hover {
+            transform: translateY(-1px);
+        }
+
+        .summary-item.red {
+            background: #fee;
+            color: #d32f2f;
+            border: 1px solid #ffcdd2;
+        }
+
+        .summary-item.amber {
+            background: #fff8e1;
+            color: #f57c00;
+            border: 1px solid #ffe0b2;
+        }
+
+        .summary-item.green {
+            background: #e8f5e9;
+            color: #388e3c;
+            border: 1px solid #c8e6c9;
+        }
+
+        .summary-count {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        main {
+            padding: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            padding: 0;
+        }
+
+        .checklist-item {
+            background: transparent;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border: 1px solid #e5e5e7;
+            height: 480px;
+            min-height: 480px;
+            max-height: 480px;
+            perspective: 1000px;
+            cursor: default;
+            z-index: 1;
+        }
+
+        .checklist-item:hover {
+            z-index: 200;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .checklist-item.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px 16px 16px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .card-front::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: #e5e5e7;
+            transition: all 0.2s ease;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .checklist-item.red .card-front::before {
+            background: #d32f2f;
+        }
+
+        .checklist-item.amber .card-front::before {
+            background: #f57c00;
+        }
+
+        .checklist-item.green .card-front::before {
+            background: #388e3c;
+        }
+
+        .card-back::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: #e5e5e7;
+            transition: all 0.2s ease;
+            border-radius: 8px 0 0 8px;
+        }
+
+        .checklist-item.red .card-back::before {
+            background: #d32f2f;
+        }
+
+        .checklist-item.amber .card-back::before {
+            background: #f57c00;
+        }
+
+        .checklist-item.green .card-back::before {
+            background: #388e3c;
+        }
+
+        .checklist-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #d1d1d6;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            gap: 12px;
+            flex-shrink: 0;
+            height: 32px;
+            min-height: 32px;
+            max-height: 32px;
+        }
+
+        .flip-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        .flip-button:hover {
+            background-color: #f5f5f7;
+        }
+
+        .flip-button svg {
+            width: 18px;
+            height: 18px;
+            fill: #86868b;
+            transition: fill 0.2s ease;
+        }
+
+        .flip-button:hover svg {
+            fill: #1d1d1f;
+        }
+
+        .card-back-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .card-back-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e5e7;
+            flex-shrink: 0;
+        }
+
+        .card-back-notes {
+            color: #515154;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card-back-notes h1,
+        .card-back-notes h2,
+        .card-back-notes h3,
+        .card-back-notes h4 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            color: #1d1d1f;
+        }
+
+        .card-back-notes p {
+            margin-bottom: 12px;
+        }
+
+        .card-back-notes ul,
+        .card-back-notes ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .card-back-notes li {
+            margin-bottom: 6px;
+        }
+
+        .item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+            flex: 1;
+            line-height: 1.4;
+            letter-spacing: -0.2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .item-title[data-full-text]:hover::after {
+            content: attr(data-full-text);
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1d1d1f;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: normal;
+            z-index: 1000;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            width: max-content;
+            max-width: min(400px, calc(100vw - 40px));
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .item-title:hover {
+            overflow: visible;
+            z-index: 10;
+        }
+
+        .item-title[data-full-text]:hover::before {
+            content: '';
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #1d1d1f;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e5e5e7;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .status-indicator.red {
+            background: #d32f2f;
+        }
+
+        .status-indicator.amber {
+            background: #f57c00;
+        }
+
+        .status-indicator.green {
+            background: #388e3c;
+        }
+
+        .item-description {
+            color: #86868b;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 0;
+            margin-top: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            position: relative;
+            cursor: help;
+            height: 60px;
+            min-height: 60px;
+            max-height: 60px;
+            flex-shrink: 0;
+        }
+
+        /* Proper indentation for lists used in descriptions (e.g., card 13) */
+        .item-description ul,
+        .item-description ol {
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        .item-description li {
+            margin-bottom: 4px;
+        }
+
+        .item-description.no-rag {
+            overflow: visible;
+            text-overflow: clip;
+            display: block;
+            -webkit-line-clamp: unset;
+            line-clamp: unset;
+            -webkit-box-orient: initial;
+            cursor: default;
+            height: auto;
+            min-height: 0;
+            max-height: none;
+            white-space: normal;
+        }
+
+        .item-description[data-full-text]:hover::after {
+            content: attr(data-full-text);
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1d1d1f;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: normal;
+            z-index: 1000;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            width: max-content;
+            max-width: min(400px, calc(100vw - 40px));
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .item-description[data-full-text]:hover::before {
+            content: '';
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #1d1d1f;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .item-description:hover {
+            overflow: visible;
+            z-index: 10;
+        }
+
+        .card-content {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rag-controls {
+            display: flex;
+            flex-direction: column;
+            padding-top: 6px;
+            border-top: 1px solid #e5e5e7;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .rag-option {
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            background: #f5f5f7;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 110px;
+            min-height: 110px;
+            max-height: 110px;
+            flex: 0 0 100px;
+        }
+
+        .rag-option:hover {
+            background: #e8e8ed;
+            border-color: #d1d1d6;
+        }
+
+        .rag-option.red {
+            background: #fee;
+            border-left: 3px solid #d32f2f;
+        }
+
+        .rag-option.amber {
+            background: #fff8e1;
+            border-left: 3px solid #f57c00;
+        }
+
+        .rag-option.green {
+            background: #e8f5e9;
+            border-left: 3px solid #388e3c;
+        }
+
+        .rag-option.active {
+            border: 1px solid;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+
+        .rag-option.active.red {
+            border-color: #d32f2f;
+        }
+
+        .rag-option.active.amber {
+            border-color: #f57c00;
+        }
+
+        .rag-option.active.green {
+            border-color: #388e3c;
+        }
+
+        .rag-option-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+            height: 20px;
+            min-height: 20px;
+        }
+
+        .rag-option.red .rag-option-header {
+            color: #d32f2f;
+        }
+
+        .rag-option.amber .rag-option-header {
+            color: #f57c00;
+        }
+
+        .rag-option.green .rag-option-header {
+            color: #388e3c;
+        }
+
+        .rag-option-text {
+            color: #515154;
+            font-size: 11px;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            position: relative;
+            height: 56px;
+            min-height: 56px;
+            max-height: 56px;
+            flex-shrink: 0;
+        }
+
+        .rag-option-text[data-full-text] {
+            cursor: help;
+        }
+
+        .rag-option-text[data-full-text]:hover::after {
+            content: attr(data-full-text);
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1d1d1f;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: normal;
+            z-index: 1000;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            width: max-content;
+            max-width: min(350px, calc(100vw - 40px));
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .rag-option-text[data-full-text]:hover::before {
+            content: '';
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #1d1d1f;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .rag-option-text:hover {
+            overflow: visible;
+            z-index: 10;
+        }
+
+        .rag-option-icon {
+            font-size: 14px;
+        }
+
+        .genai-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+        }
+
+        .genai-modal-overlay.active {
+            display: flex;
+        }
+
+        .genai-modal {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 28px 24px 28px;
+            width: min(1120px, 100% - 40px);
+            max-height: calc(100vh - 80px);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .genai-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .genai-modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .genai-modal-close {
+            border: none;
+            background: transparent;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            color: #86868b;
+            padding: 4px 8px;
+            border-radius: 999px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .genai-modal-close:hover {
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .genai-modal-body {
+            overflow: auto;
+        }
+
+        .genai-fail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .genai-fail-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 14px 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e5e7;
+            font-size: 13px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .genai-fail-card strong {
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 16px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            header {
+                padding: 20px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-right {
+                align-self: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .summary {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .summary-item {
+                justify-content: space-between;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #86868b;
+            font-size: 14px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e5e5e7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>GenAI Checklist</h1>
+                <div class="summary">
+                    <div class="summary-item red">
+                        <span class="summary-label">RED:</span>
+                        <span class="summary-count" id="redCount">0</span>
+                    </div>
+                    <div class="summary-item amber">
+                        <span class="summary-label">AMBER:</span>
+                        <span class="summary-count" id="amberCount">0</span>
+                    </div>
+                    <div class="summary-item green">
+                        <span class="summary-label">GREEN:</span>
+                        <span class="summary-count" id="greenCount">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button type="button" class="genai-failures-btn">
+                    Why do GenAI projects fail in production?
+                </button>
+                <span class="header-copy">&copy; Pavel Agurov, v.04</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="grid" id="checklistGrid"></div>
+        </main>
+
+        <div class="genai-modal-overlay" id="genaiFailuresModal" aria-hidden="true">
+            <div class="genai-modal" role="dialog" aria-modal="true" aria-labelledby="genaiFailuresTitle">
+                <div class="genai-modal-header">
+                    <div class="genai-modal-title" id="genaiFailuresTitle">
+                        Why do GenAI projects fail in production?
+                    </div>
+                    <button type="button" class="genai-modal-close" aria-label="Close dialog">&times;</button>
+                </div>
+                <div class="genai-modal-body">
+                    <div class="genai-fail-grid">
+                        <div class="genai-fail-card">Non deterministic behavior and hallucinations</div>
+                        <div class="genai-fail-card">Not transparent answer (&quot;black box&quot; solution)</div>
+                        <div class="genai-fail-card">Issues with LLM security (ex. prompt injection)</div>
+                        <div class="genai-fail-card">Too many expectations (magic LLM) from end users</div>
+                        <div class="genai-fail-card">Vendor misalignment on promise vs. reality</div>
+
+                        <div class="genai-fail-card">Using GenAI when it&apos;s not needed</div>
+                        <div class="genai-fail-card">Trust to 80% quality of PoC</div>
+                        <div class="genai-fail-card">Quality criteria are not defined</div>
+                        <div class="genai-fail-card">Too expensive solution</div>
+                        <div class="genai-fail-card">Special skills are expected from end-users</div>
+
+                        <div class="genai-fail-card">Unclear goal and undefined ROI</div>
+                        <div class="genai-fail-card">Expectation from performance (&lt; 2 sec)</div>
+                        <div class="genai-fail-card">Issues with integration with existing systems</div>
+                        <div class="genai-fail-card">Garbage in input data and garbage as a result</div>
+                        <div class="genai-fail-card">No input data available in production</div>
+
+                        <div class="genai-fail-card">Ethical concerns and bias in AI models</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pin header to the top and prevent content from scrolling under it
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('header');
+            if (header) {
+                const headerHeight = header.offsetHeight;
+                document.body.style.paddingTop = headerHeight + 'px';
+            }
+
+            const modalOverlay = document.getElementById('genaiFailuresModal');
+            const openButton = document.querySelector('.genai-failures-btn');
+            const closeButton = document.querySelector('.genai-modal-close');
+
+            function openGenaiFailuresModal() {
+                if (!modalOverlay) return;
+                modalOverlay.classList.add('active');
+                modalOverlay.setAttribute('aria-hidden', 'false');
+                document.body.dataset.prevOverflow = document.body.style.overflow || '';
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeGenaiFailuresModal() {
+                if (!modalOverlay) return;
+                modalOverlay.classList.remove('active');
+                modalOverlay.setAttribute('aria-hidden', 'true');
+                if (document.body.dataset.prevOverflow !== undefined) {
+                    document.body.style.overflow = document.body.dataset.prevOverflow;
+                    delete document.body.dataset.prevOverflow;
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+
+            if (openButton) {
+                openButton.addEventListener('click', () => {
+                    openGenaiFailuresModal();
+                });
+            }
+
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    closeGenaiFailuresModal();
+                });
+            }
+
+            if (modalOverlay) {
+                modalOverlay.addEventListener('click', (event) => {
+                    if (event.target === modalOverlay) {
+                        closeGenaiFailuresModal();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modalOverlay && modalOverlay.classList.contains('active')) {
+                    closeGenaiFailuresModal();
+                }
+            });
+        });
+
+
+        // Helper function to escape HTML for attributes
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/"/g, '&quot;');
+        }
+
+        // Helper function to check if text is truncated
+        function isTextTruncated(element) {
+            return element.scrollHeight > element.clientHeight;
+        }
+
+        // Render the checklist grid
+        function renderGrid() {
+            const grid = document.getElementById('checklistGrid');
+            grid.innerHTML = '';
+
+            checklistItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = `checklist-item ${item.status || ''}`;
+                itemElement.dataset.id = item.id;
+
+                const statusClass = item.status || '';
+                const statusText = item.status === 'red' ? 'Critical Situation' : 
+                                  item.status === 'amber' ? 'Requires Attention' : 
+                                  item.status === 'green' ? 'All Good' : 'Not Assessed';
+
+                const flipIcon = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 .79-.15 1.56-.44 2.25-.15.36-.04.77.23 1.04.51.51 1.37.33 1.64-.34.37-.84.57-1.75.57-2.95 0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-.79.15-1.56.44-2.25.15-.36.04-.77-.23-1.04-.51-.51-1.37-.33-1.64.34C4.2 9.96 4 10.87 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                </svg>`;
+
+                const hasRag = item.rag && typeof item.rag === 'object';
+
+                const redTooltipAttr = hasRag && item.status !== 'red' && item.rag.red
+                    ? `data-full-text="${escapeHtml(item.rag.red)}"`
+                    : '';
+                const amberTooltipAttr = hasRag && item.status !== 'amber' && item.rag.amber
+                    ? `data-full-text="${escapeHtml(item.rag.amber)}"`
+                    : '';
+                const greenTooltipAttr = hasRag && item.status !== 'green' && item.rag.green
+                    ? `data-full-text="${escapeHtml(item.rag.green)}"`
+                    : '';
+
+                const descriptionTooltipAttr = hasRag
+                    ? `data-full-text="${escapeHtml(item.description)}"`
+                    : '';
+                const descriptionClass = `item-description${hasRag ? '' : ' no-rag'}`;
+
+                const ragControlsHtml = hasRag ? `
+                            <div class="rag-controls">
+                                <div class="rag-option red ${item.status === 'red' ? 'active' : ''}" 
+                                     data-status="red" 
+                                     onclick="updateStatus(${item.id}, 'red', event)">
+                                    <div class="rag-option-header">
+                                        <span class="rag-option-icon">🔴</span>
+                                        <span>Red - Critical Situation</span>
+                                    </div>
+                                    <div class="rag-option-text" ${redTooltipAttr}>${item.rag.red || ''}</div>
+                                </div>
+                                <div class="rag-option amber ${item.status === 'amber' ? 'active' : ''}" 
+                                     data-status="amber" 
+                                     onclick="updateStatus(${item.id}, 'amber', event)">
+                                    <div class="rag-option-header">
+                                        <span class="rag-option-icon">🟡</span>
+                                        <span>Amber - Requires Attention</span>
+                                    </div>
+                                    <div class="rag-option-text" ${amberTooltipAttr}>${item.rag.amber || ''}</div>
+                                </div>
+                                <div class="rag-option green ${item.status === 'green' ? 'active' : ''}" 
+                                     data-status="green" 
+                                     onclick="updateStatus(${item.id}, 'green', event)">
+                                    <div class="rag-option-header">
+                                        <span class="rag-option-icon">🟢</span>
+                                        <span>Green - All Good</span>
+                                    </div>
+                                    <div class="rag-option-text" ${greenTooltipAttr}>${item.rag.green || ''}</div>
+                                </div>
+                            </div>
+                ` : '';
+
+                itemElement.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <div class="card-content">
+                                <div class="item-header">
+                                    <div class="item-title" ${item.title.length > 50 ? `data-full-text="${escapeHtml(item.title)}"` : ''}>${item.title}</div>
+                                    <button class="flip-button" onclick="flipCard(${item.id}, event)" title="Flip card">
+                                        ${flipIcon}
+                                    </button>
+                                    <div class="status-indicator ${statusClass}" title="${statusText}"></div>
+                                </div>
+                                <div class="${descriptionClass}" ${descriptionTooltipAttr}>${item.description}</div>
+                            </div>
+                            ${ragControlsHtml}
+                        </div>
+                        <div class="card-back">
+                            <div class="item-header">
+                                <div class="card-back-title">${item.title}</div>
+                                <button class="flip-button" onclick="flipCard(${item.id}, event)" title="Flip card">
+                                    ${flipIcon}
+                                </button>
+                            </div>
+                            <div class="card-back-content">
+                                <div class="card-back-notes">${item.notes || '<p>No additional notes available.</p>'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(itemElement);
+            });
+
+            updateSummary();
+        }
+
+        // Flip card function
+        function flipCard(itemId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const itemElement = document.querySelector(`.checklist-item[data-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.classList.toggle('flipped');
+            }
+        }
+
+        // Update status of a checklist item
+        function updateStatus(itemId, status, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const item = checklistItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            item.status = status;
+
+            // Update the item element
+            const itemElement = document.querySelector(`.checklist-item[data-id="${itemId}"]`);
+            if (itemElement) {
+                // Remove all status classes
+                itemElement.classList.remove('red', 'amber', 'green');
+                // Add new status class
+                itemElement.classList.add(status);
+
+                // Update status indicator
+                const indicator = itemElement.querySelector('.status-indicator');
+                indicator.classList.remove('red', 'amber', 'green');
+                indicator.classList.add(status);
+
+                // Update RAG option active states
+                const options = itemElement.querySelectorAll('.rag-option');
+                options.forEach(option => {
+                    option.classList.remove('active');
+                    const textElement = option.querySelector('.rag-option-text');
+                    if (option.dataset.status === status) {
+                        option.classList.add('active');
+                        // Remove tooltip when active (text is always truncated to 2 lines)
+                        textElement.removeAttribute('data-full-text');
+                    } else {
+                        // Add tooltip when not active
+                        const ragStatus = option.dataset.status;
+                        if (item && item.rag && item.rag[ragStatus]) {
+                            textElement.setAttribute('data-full-text', escapeHtml(item.rag[ragStatus]));
+                        }
+                    }
+                });
+            }
+
+            updateSummary();
+        }
+
+        // Update summary statistics
+        function updateSummary() {
+            const counts = {
+                red: checklistItems.filter(item => item.status === 'red').length,
+                amber: checklistItems.filter(item => item.status === 'amber').length,
+                green: checklistItems.filter(item => item.status === 'green').length
+            };
+
+            document.getElementById('redCount').textContent = counts.red;
+            document.getElementById('amberCount').textContent = counts.amber;
+            document.getElementById('greenCount').textContent = counts.green;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+        });
+    </script>
+</body>
+</html>
+

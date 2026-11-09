@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 4: Architecture Decisions</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000; color: #FFF;
+            display: flex; flex-direction: column;
+        }
+
+        /* ── Stepper ── */
+        .stepper {
+            display: flex; align-items: center;
+            padding: 10px 32px;
+            background: #0D0D0D;
+            border-bottom: 2px solid #1A1A1A;
+            flex-shrink: 0;
+        }
+        .step {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 20px;
+            background: transparent; border: 2px solid #2A2A2A;
+            color: #777; cursor: pointer;
+            font-size: 0.92rem; font-weight: 500;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .step:hover { color: #bbb; border-color: #666; background: rgba(255,255,255,0.04); }
+        .step.active {
+            color: #93C5FD; border-color: #60A5FA;
+            background: rgba(96,165,250,0.13);
+            box-shadow: 0 0 0 1px rgba(96,165,250,0.25), inset 0 -3px 0 #60A5FA;
+            font-weight: 600;
+        }
+        .step.done { color: #34D399; border-color: #10B981; background: rgba(16,185,129,0.08); }
+        .step .num {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #2A2A2A; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; color: #888; flex-shrink: 0; font-weight: 700;
+        }
+        .step.active .num { background: #60A5FA; color: #000; box-shadow: 0 0 8px rgba(96,165,250,0.6); }
+        .step.done .num { background: #10B981; color: #000; }
+        .sep { color: #555; padding: 0 8px; font-size: 1.2rem; font-weight: bold; flex-shrink: 0; }
+
+        /* ── Slides ── */
+        .slides-wrap { flex: 1; overflow: hidden; position: relative; }
+        .slide { display: none; position: absolute; inset: 0; flex-direction: column; overflow: hidden; }
+        .slide.active { display: flex; }
+        .slide .container { flex: 1; padding: 12px 48px 14px; overflow-y: auto; max-width: 100%; }
+        .slide h1 { font-size: 1.85rem; font-weight: 300; margin-bottom: 3px; color: #60A5FA; letter-spacing: -0.02em; }
+        .slide .subtitle { font-size: 0.85rem; color: #A78BFA; font-weight: 300; margin-bottom: 8px; }
+
+        /* ── Slide 9: Autonomy Spectrum ── */
+        #slide-9 .slider-section { background: #0A0A0A; border: 1px solid #333; padding: 12px 14px; margin-bottom: 8px; }
+        #slide-9 .slider-container { position: relative; height: 36px; margin-bottom: 8px; }
+        #slide-9 .slider-bg { position: absolute; width: 100%; height: 36px; background: linear-gradient(90deg, #DC2626 0%, #F59E0B 40%, #EAB308 60%, #10B981 100%); border-radius: 6px; }
+        #slide-9 .zone-markers { position: absolute; width: 100%; height: 36px; display: flex; }
+        #slide-9 .zone-marker { flex: 1; border-right: 2px solid rgba(255,255,255,0.3); }
+        #slide-9 .zone-marker:last-child { border-right: none; }
+        #slide-9 .slider-knob { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 26px; height: 26px; background: #FFF; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 3px #60A5FA; cursor: pointer; transition: box-shadow 0.2s; }
+        #slide-9 .slider-knob:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.6), 0 0 0 5px #60A5FA; }
+        #slide-9 .slider-input { position: absolute; width: 100%; height: 50px; opacity: 0; cursor: pointer; top: 0; left: 0; }
+        #slide-9 .zone-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.7rem; }
+        #slide-9 .zone-labels span { text-align: center; flex: 1; }
+        #slide-9 .zone-labels .red { color: #DC2626; }
+        #slide-9 .zone-labels .orange { color: #F59E0B; }
+        #slide-9 .zone-labels .yellow { color: #EAB308; }
+        #slide-9 .zone-labels .green { color: #10B981; }
+        #slide-9 .current-zone { text-align: center; padding: 8px 12px; margin-bottom: 8px; border-radius: 6px; transition: all 0.3s; }
+        #slide-9 .current-zone h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 2px; }
+        #slide-9 .current-zone p { font-size: 0.8rem; opacity: 0.9; }
+        #slide-9 .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+        #slide-9 .metric-card { background: #1A1A1A; border: 2px solid #333; padding: 8px; text-align: center; transition: all 0.3s; }
+        #slide-9 .metric-card.blue { border-color: #3B82F6; }
+        #slide-9 .metric-card.red { border-color: #DC2626; }
+        #slide-9 .metric-card.orange { border-color: #F59E0B; }
+        #slide-9 .metric-card.purple { border-color: #A78BFA; }
+        #slide-9 .metric-value { font-size: 1.1rem; font-weight: 600; color: #FFF; margin-bottom: 2px; }
+        #slide-9 .metric-label { font-size: 0.65rem; color: #999; text-transform: uppercase; letter-spacing: 0.05em; }
+        #slide-9 .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #slide-9 .section { background: #0A0A0A; border: 1px solid #333; padding: 10px 12px; }
+        #slide-9 .section h3 { font-size: 0.9rem; font-weight: 600; color: #FFF; margin-bottom: 7px; }
+        #slide-9 .example-task { background: #1A1A1A; border: 2px solid #333; padding: 7px 9px; margin-bottom: 5px; cursor: pointer; transition: all 0.3s; }
+        #slide-9 .example-task:hover { border-color: #60A5FA; transform: translateX(4px); }
+        #slide-9 .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+        #slide-9 .task-name { font-size: 0.88rem; font-weight: 600; color: #FFF; }
+        #slide-9 .task-autonomy { font-size: 0.9rem; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+        #slide-9 .task-details { font-size: 0.7rem; color: #999; }
+        #slide-9 .analyze-section select { width: 100%; background: #1A1A1A; border: 2px solid #333; color: #FFF; padding: 8px 10px; font-size: 0.88rem; margin-bottom: 8px; cursor: pointer; transition: border-color 0.3s; }
+        #slide-9 .analyze-section select:focus { outline: none; border-color: #60A5FA; }
+        #slide-9 .analysis-result { background: #0F1419; border: 2px solid #60A5FA; padding: 12px 14px; margin-top: 8px; display: none; }
+        #slide-9 .analysis-result.visible { display: block; }
+        #slide-9 .analysis-result h4 { color: #60A5FA; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+        #slide-9 .analysis-result p { color: #CCC; font-size: 0.8rem; line-height: 1.5; margin-bottom: 6px; }
+        #slide-9 .analysis-result strong { color: #FFF; }
+        #slide-9 .analysis-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+        #slide-9 .analysis-metric { background: #000; padding: 8px; text-align: center; border-radius: 4px; }
+        #slide-9 .analysis-metric-label { font-size: 0.68rem; color: #666; margin-bottom: 3px; }
+        #slide-9 .analysis-metric-value { font-size: 0.88rem; font-weight: 600; color: #60A5FA; }
+        #slide-9 .challenge-btn { width: 100%; padding: 10px; margin-top: 8px; font-size: 0.9rem; font-weight: 600; background: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%); color: #FFF; border: none; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; }
+        #slide-9 .challenge-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(96,165,250,0.3); }
+        #slide-9 .quiz-mode { background: #0A0A0A; border: 2px solid #60A5FA; padding: 40px; }
+        #slide-9 .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #333; }
+        #slide-9 .quiz-progress { display: flex; align-items: center; gap: 15px; }
+        #slide-9 .quiz-progress span { font-size: 1.1rem; color: #60A5FA; font-weight: 600; }
+        #slide-9 .stars { display: flex; gap: 5px; font-size: 1.2rem; }
+        #slide-9 .quiz-score { font-size: 1.3rem; font-weight: 600; color: #A78BFA; }
+        #slide-9 .quiz-scenario { background: #1A1A1A; border: 2px solid #333; padding: 30px; margin-bottom: 30px; display: flex; gap: 20px; align-items: center; }
+        #slide-9 .quiz-scenario-icon { font-size: 3rem; flex-shrink: 0; }
+        #slide-9 .quiz-scenario-text { font-size: 1.2rem; line-height: 1.6; color: #FFF; }
+        #slide-9 .quiz-question { margin-bottom: 30px; }
+        #slide-9 .quiz-question h3 { font-size: 1.5rem; font-weight: 600; color: #60A5FA; margin-bottom: 15px; }
+        #slide-9 .quiz-guess { font-size: 1.1rem; color: #CCC; margin-top: 15px; }
+        #slide-9 .quiz-guess strong { color: #60A5FA; font-size: 1.3rem; }
+        #slide-9 .quiz-feedback { background: #1A1A1A; border: 2px solid #60A5FA; padding: 30px; margin-bottom: 30px; }
+        #slide-9 .quiz-feedback.excellent { border-color: #10B981; }
+        #slide-9 .quiz-feedback.close { border-color: #EAB308; }
+        #slide-9 .quiz-feedback.off { border-color: #DC2626; }
+        #slide-9 .feedback-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333; }
+        #slide-9 .feedback-icon { font-size: 2rem; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #10B981; color: #000; font-weight: 700; }
+        #slide-9 .feedback-icon.close { background: #EAB308; }
+        #slide-9 .feedback-icon.off { background: #DC2626; color: #FFF; }
+        #slide-9 .feedback-message { font-size: 1.5rem; font-weight: 600; color: #FFF; }
+        #slide-9 .feedback-comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        #slide-9 .feedback-item { background: #000; padding: 15px; text-align: center; }
+        #slide-9 .feedback-label { font-size: 0.85rem; color: #999; margin-bottom: 8px; }
+        #slide-9 .feedback-value { font-size: 1.5rem; font-weight: 600; color: #60A5FA; }
+        #slide-9 .feedback-explanation { background: #0F1419; padding: 20px; border-left: 3px solid #60A5FA; }
+        #slide-9 .feedback-explanation strong { color: #60A5FA; font-size: 1.1rem; display: block; margin-bottom: 10px; }
+        #slide-9 .feedback-explanation p { color: #CCC; line-height: 1.6; margin: 0; }
+        #slide-9 .quiz-actions { display: flex; gap: 15px; }
+        #slide-9 .quiz-btn { flex: 1; padding: 18px; font-size: 1.1rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s; letter-spacing: 0.05em; }
+        #slide-9 .quiz-btn.primary { background: #60A5FA; color: #000; }
+        #slide-9 .quiz-btn.primary:hover { background: #3B82F6; }
+        #slide-9 .quiz-btn.secondary { background: #333; color: #FFF; }
+        #slide-9 .quiz-btn.secondary:hover { background: #444; }
+        #slide-9 .quiz-summary { background: #0A0A0A; border: 2px solid #A78BFA; padding: 60px 40px; text-align: center; }
+        #slide-9 .summary-icon { font-size: 5rem; margin-bottom: 20px; }
+        #slide-9 .quiz-summary h2 { font-size: 2.5rem; font-weight: 600; color: #A78BFA; margin-bottom: 30px; }
+        #slide-9 .summary-score { margin-bottom: 30px; }
+        #slide-9 .summary-stars { font-size: 2.5rem; margin-bottom: 15px; }
+        #slide-9 .summary-accuracy { font-size: 1.3rem; color: #60A5FA; }
+        #slide-9 .summary-details { background: #1A1A1A; border: 1px solid #333; padding: 25px; margin-bottom: 30px; text-align: left; font-size: 0.95rem; line-height: 1.8; color: #CCC; }
+        #slide-9 .summary-details strong { color: #FFF; }
+        #slide-9 .summary-actions { display: flex; gap: 15px; justify-content: center; }
+        #slide-9 .summary-actions .quiz-btn { flex: 0 1 300px; }
+        #slide-9 .disclaimer { background: #0F1419; border-left: 3px solid #666; padding: 7px 10px; margin-top: 8px; font-size: 0.68rem; color: #999; line-height: 1.35; }
+        #slide-9 .disclaimer strong { color: #CCC; }
+
+        /* ── Slide 13: N×M Integration ── */
+        #slide-13 .controls { display: flex; gap: 15px; margin-bottom: 10px; background: #0A0A0A; border: 1px solid #333; padding: 10px 14px; align-items: center; }
+        #slide-13 .slider-control { flex: 1; }
+        #slide-13 .slider-label { font-size: 0.72rem; color: #999; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+        #slide-13 .slider-value { font-size: 1.2rem; font-weight: 600; color: #60A5FA; margin-bottom: 3px; }
+        #slide-13 input[type="range"] { width: 100%; height: 8px; background: #333; outline: none; -webkit-appearance: none; border-radius: 4px; }
+        #slide-13 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #60A5FA; cursor: pointer; border-radius: 50%; }
+        #slide-13 .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+        #slide-13 .approach-box { background: #0A0A0A; border: 2px solid #333; padding: 10px; position: relative; }
+        #slide-13 .approach-box.problem { border-color: #F472B6; }
+        #slide-13 .approach-box.solution { border-color: #10B981; }
+        #slide-13 .approach-header { margin-bottom: 6px; }
+        #slide-13 .approach-header h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 2px; }
+        #slide-13 .approach-box.problem h2 { color: #F472B6; }
+        #slide-13 .approach-box.solution h2 { color: #10B981; }
+        #slide-13 .approach-header p { font-size: 0.78rem; color: #999; }
+        #slide-13 .diagram-container { background: #000; border: 1px solid #333; padding: 6px; height: 260px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; position: relative; }
+        #slide-13 svg { max-width: 100%; max-height: 100%; }
+        #slide-13 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        #slide-13 .stat-box { background: #1A1A1A; border: 1px solid #333; padding: 6px 8px; text-align: center; }
+        #slide-13 .stat-value { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
+        #slide-13 .approach-box.problem .stat-value { color: #F472B6; }
+        #slide-13 .approach-box.solution .stat-value { color: #10B981; }
+        #slide-13 .stat-label { font-size: 0.62rem; color: #666; text-transform: uppercase; }
+        #slide-13 .savings-banner { background: linear-gradient(90deg, #10B981, #3B82F6); padding: 7px 12px; text-align: center; border-radius: 8px; }
+        #slide-13 .savings-banner h3 { font-size: 1.3rem; font-weight: 600; color: #000; margin-bottom: 2px; }
+        #slide-13 .savings-banner p { font-size: 0.78rem; color: #000; opacity: 0.8; }
+        #slide-13 .disclaimer { background: #0F1419; border-left: 3px solid #666; padding: 7px 12px; margin-top: 8px; font-size: 0.68rem; color: #999; line-height: 1.35; }
+        #slide-13 .disclaimer strong { color: #CCC; }
+    </style>
+</head>
+<body>
+
+    <div class="stepper">
+        <button class="step active" id="btn-0" onclick="goTo(0)">
+            <span class="num">1</span> Autonomy Spectrum
+        </button>
+        <span class="sep">→</span>
+        <button class="step" id="btn-1" onclick="goTo(1)">
+            <span class="num">2</span> N×M Integration Problem
+        </button>
+    </div>
+
+    <div class="slides-wrap">
+
+        <!-- ═══ SLIDE 9: Autonomy Spectrum ═══ -->
+        <div class="slide active" id="slide-9">
+            <div class="container">
+                <h1>The Autonomy Spectrum</h1>
+                <p class="subtitle">Balance speed, risk, and control</p>
+
+                <div class="slider-section">
+                    <div class="slider-container">
+                        <div class="slider-bg"></div>
+                        <div class="zone-markers">
+                            <div class="zone-marker"></div><div class="zone-marker"></div>
+                            <div class="zone-marker"></div><div class="zone-marker"></div>
+                        </div>
+                        <div class="slider-knob" id="sliderKnob"></div>
+                        <input type="range" class="slider-input" id="autonomySlider" min="0" max="100" value="50">
+                    </div>
+                    <div class="zone-labels">
+                        <span class="red">Human Drives<br>(0–40%)</span>
+                        <span class="orange">Approve Before<br>(40–60%)</span>
+                        <span class="yellow">Notify After<br>(60–80%)</span>
+                        <span class="green">Execute Silently<br>(80–100%)</span>
+                    </div>
+                </div>
+
+                <div class="current-zone" id="currentZone">
+                    <h2 id="zoneName">Approve Before (50% autonomy)</h2>
+                    <p id="zoneDesc">Human approves before action</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card blue"><div class="metric-value" id="responseTime">30 min</div><div class="metric-label">Response Time</div></div>
+                    <div class="metric-card red"><div class="metric-value" id="riskScore">5/10</div><div class="metric-label">Risk Level</div></div>
+                    <div class="metric-card orange"><div class="metric-value" id="operationalCost">Medium</div><div class="metric-label">Operational Cost</div></div>
+                    <div class="metric-card purple"><div class="metric-value" id="implementationCost">Medium</div><div class="metric-label">Implementation Cost</div></div>
+                </div>
+
+                <div class="main-grid" id="learnMode">
+                    <div class="section">
+                        <h3>Example Tasks</h3>
+                        <div class="example-task" onclick="s9.setAutonomy(80)"><div class="task-header"><div class="task-name">Password Reset</div><div class="task-autonomy" style="background:#10B981;color:#000;">~80%</div></div><div class="task-details">Low impact • Easy to reverse • Low risk</div></div>
+                        <div class="example-task" onclick="s9.setAutonomy(65)"><div class="task-header"><div class="task-name">Small Refund</div><div class="task-autonomy" style="background:#EAB308;color:#000;">~65%</div></div><div class="task-details">Medium impact • Easy to reverse • Medium risk</div></div>
+                        <div class="example-task" onclick="s9.setAutonomy(35)"><div class="task-header"><div class="task-name">Large Refund</div><div class="task-autonomy" style="background:#F59E0B;color:#000;">~35%</div></div><div class="task-details">High impact • Moderate to reverse • High risk</div></div>
+                        <div class="example-task" onclick="s9.setAutonomy(10)"><div class="task-header"><div class="task-name">Account Deletion</div><div class="task-autonomy" style="background:#DC2626;color:#FFF;">~10%</div></div><div class="task-details">Critical impact • Impossible to reverse • Very high risk</div></div>
+                    </div>
+                    <div class="section analyze-section">
+                        <h3>Try Different Scenarios</h3>
+                        <select id="scenarioSelect" onchange="s9.applyScenario()">
+                            <option value="">Select a scenario...</option>
+                            <option value="password_reset">Password Reset Request</option>
+                            <option value="small_refund">Refund $50 to Customer</option>
+                            <option value="large_refund">Refund $5,000 to Customer</option>
+                            <option value="account_deletion">Delete User Account</option>
+                            <option value="data_export">Export User Data (GDPR)</option>
+                            <option value="subscription_cancel">Cancel Subscription</option>
+                            <option value="email_reply">Reply to Support Email</option>
+                            <option value="fraud_detection">Flag Fraudulent Transaction</option>
+                        </select>
+                        <div class="analysis-result" id="analysisResult">
+                            <h4 id="scenarioTitle">Scenario Analysis</h4>
+                            <p><strong>Recommended Autonomy:</strong> <span id="recommendedAutonomy"></span></p>
+                            <p><strong>Why:</strong> <span id="reasoning"></span></p>
+                            <div class="analysis-metrics">
+                                <div class="analysis-metric"><div class="analysis-metric-label">Response</div><div class="analysis-metric-value" id="analysisResponse">—</div></div>
+                                <div class="analysis-metric"><div class="analysis-metric-label">Risk</div><div class="analysis-metric-value" id="analysisRisk">—</div></div>
+                                <div class="analysis-metric"><div class="analysis-metric-label">Op Cost</div><div class="analysis-metric-value" id="analysisOpCost">—</div></div>
+                                <div class="analysis-metric"><div class="analysis-metric-label">Impl Cost</div><div class="analysis-metric-value" id="analysisImplCost">—</div></div>
+                            </div>
+                        </div>
+                        <button class="challenge-btn" onclick="s9.startChallenge()">🎯 Start Challenge</button>
+                    </div>
+                </div>
+
+                <div class="quiz-mode" id="quizMode" style="display:none;">
+                    <div class="quiz-header">
+                        <div class="quiz-progress"><span id="quizProgressText">Question 1/4</span><div class="stars" id="quizStars"></div></div>
+                        <div class="quiz-score">Score: <span id="quizScore">0/0</span></div>
+                    </div>
+                    <div class="quiz-scenario" id="quizScenario"><div class="quiz-scenario-icon">💼</div><div class="quiz-scenario-text" id="quizScenarioText">Loading...</div></div>
+                    <div class="quiz-question" id="quizQuestion">
+                        <h3>Where would YOU set autonomy?</h3>
+                        <div class="quiz-guess" id="quizGuess">Move slider: <strong id="quizGuessValue">50%</strong></div>
+                    </div>
+                    <div class="quiz-feedback" id="quizFeedback" style="display:none;">
+                        <div class="feedback-header" id="feedbackHeader"><span class="feedback-icon" id="feedbackIcon">✓</span><span class="feedback-message" id="feedbackMessage">Excellent!</span></div>
+                        <div class="feedback-comparison">
+                            <div class="feedback-item"><div class="feedback-label">Your guess</div><div class="feedback-value" id="feedbackYourGuess">50%</div></div>
+                            <div class="feedback-item"><div class="feedback-label">Recommended</div><div class="feedback-value" id="feedbackCorrect">35%</div></div>
+                            <div class="feedback-item"><div class="feedback-label">Difference</div><div class="feedback-value" id="feedbackDiff">15%</div></div>
+                        </div>
+                        <div class="feedback-explanation"><strong>💡 Why this level?</strong><p id="feedbackExplanation">...</p></div>
+                    </div>
+                    <div class="quiz-actions">
+                        <button class="quiz-btn secondary" onclick="s9.skipQuestion()" id="skipBtn">Skip</button>
+                        <button class="quiz-btn primary" onclick="s9.checkAnswer()" id="checkBtn">Check My Answer</button>
+                        <button class="quiz-btn primary" onclick="s9.nextQuestion()" id="nextBtn" style="display:none;">Next Scenario →</button>
+                    </div>
+                </div>
+
+                <div class="quiz-summary" id="quizSummary" style="display:none;">
+                    <div class="summary-icon">🏆</div>
+                    <h2>Challenge Complete!</h2>
+                    <div class="summary-score"><div class="summary-stars" id="summaryStars"></div><div class="summary-accuracy" id="summaryAccuracy">Average accuracy: 85%</div></div>
+                    <div class="summary-details" id="summaryDetails"></div>
+                    <div class="summary-actions">
+                        <button class="quiz-btn secondary" onclick="s9.exitQuiz()">Back to Learn Mode</button>
+                        <button class="quiz-btn primary" onclick="s9.startChallenge()">Try Again</button>
+                    </div>
+                </div>
+
+                <div class="disclaimer"><strong>Key Tradeoff:</strong> High autonomy = fast &amp; cheap to operate, but risky &amp; expensive to build safely. Low autonomy = slow &amp; expensive to operate, but safe &amp; cheap to build.</div>
+            </div>
+        </div>
+
+        <!-- ═══ SLIDE 13: N×M Integration ═══ -->
+        <div class="slide" id="slide-13">
+            <div class="container">
+                <h1>The N×M Integration Problem</h1>
+                <p class="subtitle">Why point-to-point integrations don't scale</p>
+                <div class="controls">
+                    <div class="slider-control">
+                        <div class="slider-label">Number of Agents (N)</div>
+                        <div class="slider-value" id="agentValue">5</div>
+                        <input type="range" id="agentSlider" min="2" max="10" value="5" oninput="s13.update()">
+                    </div>
+                    <div class="slider-control">
+                        <div class="slider-label">Number of Systems (M)</div>
+                        <div class="slider-value" id="systemValue">6</div>
+                        <input type="range" id="systemSlider" min="2" max="10" value="6" oninput="s13.update()">
+                    </div>
+                </div>
+                <div class="comparison-grid">
+                    <div class="approach-box problem">
+                        <div class="approach-header"><h2>❌ Point-to-Point</h2><p>Every agent connects directly to every system</p></div>
+                        <div class="diagram-container"><svg id="p2pDiagram" width="100%" height="100%" viewBox="0 0 440 440" preserveAspectRatio="xMidYMid meet"></svg></div>
+                        <div class="stats-grid">
+                            <div class="stat-box"><div class="stat-value" id="p2pIntegrations">30</div><div class="stat-label">Integrations</div></div>
+                            <div class="stat-box"><div class="stat-value" id="p2pComplexity">O(N×M)</div><div class="stat-label">Complexity</div></div>
+                            <div class="stat-box"><div class="stat-value" id="p2pCost">~$150K</div><div class="stat-label">Dev Cost (example)</div></div>
+                            <div class="stat-box"><div class="stat-value" id="p2pMaintenance">~$60K/yr</div><div class="stat-label">Maintenance (example)</div></div>
+                        </div>
+                    </div>
+                    <div class="approach-box solution">
+                        <div class="approach-header"><h2>✅ Hub-and-Spoke (MCP)</h2><p>Agents connect through a central protocol</p></div>
+                        <div class="diagram-container"><svg id="mcpDiagram" width="100%" height="100%" viewBox="0 0 440 440" preserveAspectRatio="xMidYMid meet"></svg></div>
+                        <div class="stats-grid">
+                            <div class="stat-box"><div class="stat-value" id="mcpIntegrations">11</div><div class="stat-label">Integrations</div></div>
+                            <div class="stat-box"><div class="stat-value" id="mcpComplexity">O(N+M)</div><div class="stat-label">Complexity</div></div>
+                            <div class="stat-box"><div class="stat-value" id="mcpCost">~$22K</div><div class="stat-label">Dev Cost (example)</div></div>
+                            <div class="stat-box"><div class="stat-value" id="mcpMaintenance">~$11K/yr</div><div class="stat-label">Maintenance (example)</div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="savings-banner"><h3 id="savingsPercent">~85% Cost Reduction</h3><p>Example model: standardized protocol vs point-to-point integrations</p></div>
+                <div class="disclaimer"><strong>Note:</strong> Cost calculations use simplified assumptions ($5K per custom integration, $2K per protocol adapter). Real-world costs vary dramatically. The N+M vs N×M complexity benefit remains valid regardless of specific cost assumptions.</div>
+            </div>
+        </div>
+
+    </div><!-- end slides-wrap -->
+
+    <!-- ═══ Stepper JS ═══ -->
+    <script>
+        let activeSlide = 0;
+        const slideIds = ['slide-9', 'slide-13'];
+        function goTo(i) {
+            document.getElementById(slideIds[activeSlide]).classList.remove('active');
+            document.getElementById('btn-' + activeSlide).classList.remove('active');
+            if (i > activeSlide) document.getElementById('btn-' + activeSlide).classList.add('done');
+            else document.getElementById('btn-' + activeSlide).classList.remove('done');
+            activeSlide = i;
+            document.getElementById(slideIds[i]).classList.add('active');
+            document.getElementById('btn-' + i).classList.add('active');
+            document.getElementById('btn-' + i).classList.remove('done');
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowRight' && activeSlide < 1) goTo(activeSlide + 1);
+            if (e.key === 'ArrowLeft' && activeSlide > 0) goTo(activeSlide - 1);
+        });
+    </script>
+
+    <!-- ═══ Slide 9 JS ═══ -->
+    <script>
+    const s9 = (() => {
+        let autonomy = 50;
+        const zones = {
+            0:  { name: 'Human Drives',    desc: 'Human decides, agent assists',              color: '#DC2626' },
+            40: { name: 'Approve Before',  desc: 'Human approves before action',              color: '#F59E0B' },
+            60: { name: 'Notify After',    desc: 'Agent acts, seeks retrospective approval',  color: '#EAB308' },
+            80: { name: 'Execute Silently',desc: 'Agent acts, notifies after',                color: '#10B981' }
+        };
+        function getZone(v) { return v >= 80 ? zones[80] : v >= 60 ? zones[60] : v >= 40 ? zones[40] : zones[0]; }
+        function calcMetrics(v) {
+            return {
+                responseTime: v > 70 ? 'Seconds' : v > 50 ? 'Minutes' : v > 30 ? 'Hours' : 'Days',
+                riskScore: Math.round(v / 10),
+                operationalCost: v > 70 ? 'Very Low' : v > 50 ? 'Low' : v > 30 ? 'Medium' : 'High',
+                implementationCost: v > 70 ? 'Very High' : v > 50 ? 'High' : v > 30 ? 'Medium' : 'Low'
+            };
+        }
+        function updateUI() {
+            const zone = getZone(autonomy), m = calcMetrics(autonomy);
+            document.getElementById('sliderKnob').style.left = autonomy + '%';
+            const zoneEl = document.getElementById('currentZone');
+            zoneEl.style.backgroundColor = zone.color + '20';
+            zoneEl.style.borderLeft = `4px solid ${zone.color}`;
+            document.getElementById('zoneName').textContent = `${zone.name} (${autonomy}% autonomy)`;
+            document.getElementById('zoneDesc').textContent = zone.desc;
+            document.getElementById('responseTime').textContent = m.responseTime;
+            document.getElementById('riskScore').textContent = m.riskScore + '/10';
+            document.getElementById('operationalCost').textContent = m.operationalCost;
+            document.getElementById('implementationCost').textContent = m.implementationCost;
+        }
+        function setAutonomy(v) { autonomy = v; document.getElementById('autonomySlider').value = v; updateUI(); }
+
+        const scenarios = {
+            password_reset:      { name:'Password Reset Request',          autonomy:80, reasoning:'Low impact, fully reversible, high volume. Ideal for automation with notification.' },
+            small_refund:        { name:'Refund $50 to Customer',          autonomy:65, reasoning:'Medium impact, reversible. Notify-after keeps humans informed without blocking speed.' },
+            large_refund:        { name:'Refund $5,000 to Customer',       autonomy:35, reasoning:'High financial impact. Harder to reverse if fraudulent. Human approval reduces risk.' },
+            account_deletion:    { name:'Delete User Account',             autonomy:10, reasoning:'Irreversible data loss. Legal/compliance risk. Human must verify before deletion.' },
+            data_export:         { name:'Export User Data (GDPR)',         autonomy:70, reasoning:'Legal requirement, low risk if identity verified. Auditable and reversible.' },
+            subscription_cancel: { name:'Cancel Subscription',            autonomy:55, reasoning:'Medium impact (lost revenue), reversible. Approve-before prevents churn from errors.' },
+            email_reply:         { name:'Reply to Support Email',          autonomy:75, reasoning:'Low financial risk, easy to correct with follow-up.' },
+            fraud_detection:     { name:'Flag Fraudulent Transaction',     autonomy:85, reasoning:'High volume, time-critical. False positives acceptable (human reviews flags).' }
+        };
+        function applyScenario() {
+            const key = document.getElementById('scenarioSelect').value;
+            if (!key) { document.getElementById('analysisResult').classList.remove('visible'); return; }
+            const sc = scenarios[key]; setAutonomy(sc.autonomy);
+            const zone = getZone(sc.autonomy), m = calcMetrics(sc.autonomy);
+            document.getElementById('scenarioTitle').textContent = sc.name;
+            document.getElementById('recommendedAutonomy').textContent = `${sc.autonomy}% (${zone.name})`;
+            document.getElementById('reasoning').textContent = sc.reasoning;
+            document.getElementById('analysisResponse').textContent = m.responseTime;
+            document.getElementById('analysisRisk').textContent = m.riskScore + '/10';
+            document.getElementById('analysisOpCost').textContent = m.operationalCost;
+            document.getElementById('analysisImplCost').textContent = m.implementationCost;
+            document.getElementById('analysisResult').classList.add('visible');
+        }
+
+        const quizScenarios = [
+            { icon:'🔑', text:'User requests password reset via email', key:'password_reset' },
+            { icon:'💰', text:'Customer requests $50 refund for damaged item', key:'small_refund' },
+            { icon:'💳', text:'Customer demands $5,000 refund, claims fraud', key:'large_refund' },
+            { icon:'🗑️', text:'User requests account deletion (GDPR)', key:'account_deletion' },
+            { icon:'📦', text:'User requests data export under GDPR law', key:'data_export' },
+            { icon:'🚫', text:'Customer wants to cancel $200/month subscription', key:'subscription_cancel' },
+            { icon:'📧', text:'Support ticket: "How do I reset my 2FA?"', key:'email_reply' },
+            { icon:'🚨', text:'Transaction flagged: $9,999 purchase from new IP', key:'fraud_detection' }
+        ];
+        let quiz = { active:false, scenarios:[], idx:0, scores:[], total:0 };
+
+        function startChallenge() {
+            quiz.scenarios = quizScenarios.sort(() => Math.random() - 0.5).slice(0, 4);
+            quiz.idx = 0; quiz.scores = []; quiz.total = 0; quiz.active = true;
+            document.getElementById('learnMode').style.display = 'none';
+            document.getElementById('quizMode').style.display = 'block';
+            document.getElementById('quizSummary').style.display = 'none';
+            setAutonomy(50); loadQuestion();
+        }
+        function loadQuestion() {
+            const cur = quiz.scenarios[quiz.idx];
+            document.getElementById('quizProgressText').textContent = `Question ${quiz.idx + 1}/4`;
+            document.getElementById('quizScore').textContent = `${quiz.total}/${quiz.idx * 2}`;
+            document.getElementById('quizScenarioText').textContent = cur.text;
+            document.querySelector('#slide-9 .quiz-scenario-icon').textContent = cur.icon;
+            let stars = '';
+            for (let i = 0; i < quiz.idx; i++) stars += quiz.scores[i] === 2 ? '⭐⭐' : quiz.scores[i] === 1 ? '⭐' : '☆';
+            document.getElementById('quizStars').innerHTML = stars;
+            document.getElementById('quizFeedback').style.display = 'none';
+            document.getElementById('checkBtn').style.display = 'inline-block';
+            document.getElementById('skipBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('quizGuessValue').textContent = autonomy + '%';
+        }
+        function checkAnswer() {
+            const cur = quiz.scenarios[quiz.idx], correct = scenarios[cur.key].autonomy, diff = Math.abs(correct - autonomy);
+            let score = diff <= 10 ? 2 : diff <= 20 ? 1 : 0;
+            let cls = score === 2 ? 'excellent' : score === 1 ? 'close' : 'off';
+            let icon = score === 2 ? '✓✓' : score === 1 ? '~' : '✗';
+            let msg = score === 2 ? 'Excellent judgment!' : score === 1 ? 'Close! Consider this...' : autonomy > correct ? `Too risky! ${diff}% too high` : `Too cautious! ${diff}% too low`;
+            quiz.scores.push(score); quiz.total += score;
+            const fb = document.getElementById('quizFeedback');
+            fb.className = 'quiz-feedback ' + cls; fb.style.display = 'block';
+            document.getElementById('feedbackIcon').textContent = icon;
+            document.getElementById('feedbackIcon').className = 'feedback-icon ' + cls;
+            document.getElementById('feedbackMessage').textContent = msg;
+            document.getElementById('feedbackYourGuess').textContent = autonomy + '%';
+            document.getElementById('feedbackCorrect').textContent = correct + '%';
+            document.getElementById('feedbackDiff').textContent = diff + '%';
+            document.getElementById('feedbackExplanation').textContent = scenarios[cur.key].reasoning;
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+        }
+        function skipQuestion() { quiz.scores.push(0); nextQuestion(); }
+        function nextQuestion() {
+            quiz.idx++;
+            if (quiz.idx >= quiz.scenarios.length) showSummary();
+            else { setAutonomy(50); loadQuestion(); }
+        }
+        function showSummary() {
+            const total = quiz.scenarios.length * 2, pct = Math.round((quiz.total / total) * 100);
+            let stars = '', details = `<strong>Your Results:</strong><br>✓ Within 10%: ${quiz.scores.filter(s=>s===2).length} scenarios<br>✓ Within 20%: ${quiz.scores.filter(s=>s===1).length} scenarios<br>✓ Off by 20+%: ${quiz.scores.filter(s=>s===0).length} scenarios`;
+            quiz.scores.forEach(s => { stars += s === 2 ? '⭐⭐ ' : s === 1 ? '⭐ ' : '☆ '; });
+            document.getElementById('summaryStars').innerHTML = stars;
+            document.getElementById('summaryAccuracy').textContent = `Score: ${quiz.total}/${total} (${pct}%)`;
+            document.getElementById('summaryDetails').innerHTML = details;
+            document.getElementById('quizMode').style.display = 'none';
+            document.getElementById('quizSummary').style.display = 'block';
+        }
+        function exitQuiz() {
+            quiz.active = false;
+            document.getElementById('learnMode').style.display = 'grid';
+            document.getElementById('quizMode').style.display = 'none';
+            document.getElementById('quizSummary').style.display = 'none';
+            setAutonomy(50);
+        }
+
+        document.getElementById('autonomySlider').addEventListener('input', (e) => {
+            autonomy = parseInt(e.target.value); updateUI();
+            if (quiz.active) document.getElementById('quizGuessValue').textContent = autonomy + '%';
+        });
+        updateUI();
+        return { setAutonomy, applyScenario, startChallenge, checkAnswer, skipQuestion, nextQuestion, exitQuiz };
+    })();
+    </script>
+
+    <!-- ═══ Slide 13 JS ═══ -->
+    <script>
+    const s13 = (() => {
+        function update() {
+            const N = parseInt(document.getElementById('agentSlider').value);
+            const M = parseInt(document.getElementById('systemSlider').value);
+            document.getElementById('agentValue').textContent = N;
+            document.getElementById('systemValue').textContent = M;
+            const p2p = N * M, mcp = N + M;
+            const p2pCost = p2p * 5, mcpCost = mcp * 2;
+            const savings = Math.round((1 - mcpCost / p2pCost) * 100);
+            document.getElementById('p2pIntegrations').textContent = p2p;
+            document.getElementById('mcpIntegrations').textContent = mcp;
+            document.getElementById('p2pCost').textContent = '~$' + p2pCost + 'K';
+            document.getElementById('mcpCost').textContent = '~$' + mcpCost + 'K';
+            document.getElementById('p2pMaintenance').textContent = '~$' + (p2p * 2) + 'K/yr';
+            document.getElementById('mcpMaintenance').textContent = '~$' + (mcp * 1) + 'K/yr';
+            document.getElementById('savingsPercent').textContent = '~' + savings + '% Cost Reduction';
+            drawP2P(N, M); drawMCP(N, M);
+        }
+        function drawP2P(N, M) {
+            const svg = document.getElementById('p2pDiagram'); svg.innerHTML = '';
+            const W=440, H=440, ax=100, sx=340, margin=40, avail=H-2*margin;
+            const sp = Math.min(60, avail / Math.max(N-1, M-1, 1));
+            const aY = margin + (avail-(N-1)*sp)/2, sY = margin + (avail-(M-1)*sp)/2;
+            for (let i=0;i<N;i++) for (let j=0;j<M;j++) {
+                const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+                l.setAttribute('x1',ax); l.setAttribute('y1',aY+i*sp); l.setAttribute('x2',sx); l.setAttribute('y2',sY+j*sp);
+                l.setAttribute('stroke','#F472B6'); l.setAttribute('stroke-width','1'); l.setAttribute('opacity','0.3'); svg.appendChild(l);
+            }
+            for (let i=0;i<N;i++) { addCircle(svg,ax,aY+i*sp,'#3B82F6','#60A5FA','A'+(i+1)); }
+            for (let i=0;i<M;i++) { addRect(svg,sx,sY+i*sp,'#8B5CF6','#A78BFA','S'+(i+1)); }
+            addLabel(svg,ax,H-10,'Agents','#60A5FA'); addLabel(svg,sx,H-10,'Systems','#A78BFA');
+        }
+        function drawMCP(N, M) {
+            const svg = document.getElementById('mcpDiagram'); svg.innerHTML = '';
+            const cx=220, cy=220, r=145;
+            const hub = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            hub.setAttribute('cx',cx); hub.setAttribute('cy',cy); hub.setAttribute('r','40');
+            hub.setAttribute('fill','#10B981'); hub.setAttribute('stroke','#10B981'); hub.setAttribute('stroke-width','3'); svg.appendChild(hub);
+            addSvgText(svg,cx,cy-5,'MCP','#000',12,'bold'); addSvgText(svg,cx,cy+10,'Protocol','#000',10,'bold');
+            for (let i=0;i<N;i++) {
+                const a=(Math.PI/2)+(Math.PI*(i/(N-1||1))), x=cx+r*Math.cos(a), y=cy-r*Math.sin(a);
+                addLine(svg,cx,cy,x,y,'#60A5FA'); addCircle(svg,x,y,'#3B82F6','#60A5FA','A'+(i+1));
+            }
+            for (let i=0;i<M;i++) {
+                const a=(Math.PI/2)-(Math.PI*(i/(M-1||1))), x=cx+r*Math.cos(a), y=cy-r*Math.sin(a);
+                addLine(svg,cx,cy,x,y,'#A78BFA'); addRect(svg,x,y,'#8B5CF6','#A78BFA','S'+(i+1));
+            }
+        }
+        function addCircle(svg,x,y,fill,stroke,label) {
+            const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+            c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','15');
+            c.setAttribute('fill',fill);c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','2');svg.appendChild(c);
+            addSvgText(svg,x,y+5,label,'#FFF',10,'bold');
+        }
+        function addRect(svg,x,y,fill,stroke,label) {
+            const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+            r.setAttribute('x',x-12);r.setAttribute('y',y-12);r.setAttribute('width','24');r.setAttribute('height','24');
+            r.setAttribute('fill',fill);r.setAttribute('stroke',stroke);r.setAttribute('stroke-width','2');svg.appendChild(r);
+            addSvgText(svg,x,y+5,label,'#FFF',10,'bold');
+        }
+        function addLine(svg,x1,y1,x2,y2,stroke) {
+            const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+            l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+            l.setAttribute('stroke',stroke);l.setAttribute('stroke-width','2');svg.appendChild(l);
+        }
+        function addSvgText(svg,x,y,text,fill,size,weight) {
+            const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+            t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor','middle');
+            t.setAttribute('fill',fill);t.setAttribute('font-size',size);t.setAttribute('font-weight',weight||'normal');
+            t.textContent=text;svg.appendChild(t);
+        }
+        function addLabel(svg,x,y,text,fill) { addSvgText(svg,x,y,text,fill,12,'600'); }
+        update();
+        return { update };
+    })();
+    </script>
+
+</body>
+</html>

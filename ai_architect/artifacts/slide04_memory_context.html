@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory & Context Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000000;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+            padding: 10px 60px;
+            overflow-y: auto;
+            max-width: 100%;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 3px;
+            color: #60A5FA;
+            letter-spacing: -0.02em;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #A78BFA;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .section {
+            background: #0A0A0A;
+            border: 1px solid #333;
+            padding: 10px;
+        }
+        .section h2 {
+            font-size: 0.9rem;
+            font-weight: 300;
+            color: #A78BFA;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .tier-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .tier {
+            background: #1A1A1A;
+            border: 2px solid #333;
+            padding: 0;
+            position: relative;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .tier.active {
+            border-color: #60A5FA;
+        }
+        .tier.hot {
+            border-left: 4px solid #F472B6;
+        }
+        .tier.warm {
+            border-left: 4px solid #A78BFA;
+        }
+        .tier.cold {
+            border-left: 4px solid #60A5FA;
+        }
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .tier-header:hover {
+            background: #0F1419;
+        }
+        .tier-content {
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease, padding 0.3s ease;
+        }
+        .tier.expanded .tier-content {
+            height: 130px;
+            padding: 0 10px 8px 10px;
+        }
+        .tier-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tier-name::after {
+            content: '▼';
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+        .tier.expanded .tier-name::after {
+            transform: rotate(-180deg);
+        }
+        .tier.hot .tier-name { color: #F472B6; }
+        .tier.warm .tier-name { color: #A78BFA; }
+        .tier.cold .tier-name { color: #60A5FA; }
+        .tier-speed {
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+        .tier-desc {
+            font-size: 0.7rem;
+            color: #999;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .tier-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .stat {
+            background: #000;
+            padding: 4px;
+            text-align: center;
+            border-radius: 3px;
+        }
+        .stat-value {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #60A5FA;
+        }
+        .stat-label {
+            font-size: 0.6rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .memory-types {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .memory-type {
+            background: #1A1A1A;
+            border: 2px solid #333;
+            padding: 0;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .memory-type-header {
+            padding: 5px 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .memory-type-header:hover {
+            background: #0F1419;
+        }
+        .memory-type.expanded {
+            border-color: #60A5FA;
+        }
+        .memory-type-content {
+            padding: 0;
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease, padding 0.3s ease;
+        }
+        .memory-type.expanded .memory-type-content {
+            height: 45px;
+            padding: 0 10px 6px 10px;
+        }
+        .memory-type.episodic { border-left: 4px solid #3B82F6; }
+        .memory-type.semantic { border-left: 4px solid #8B5CF6; }
+        .memory-type.procedural { border-left: 4px solid #EC4899; }
+        .memory-type h3 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .memory-type h3::after {
+            content: '▼';
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+            margin-left: auto;
+        }
+        .memory-type.expanded h3::after {
+            transform: rotate(-180deg);
+        }
+        .memory-type.episodic h3 { color: #60A5FA; }
+        .memory-type.semantic h3 { color: #A78BFA; }
+        .memory-type.procedural h3 { color: #F472B6; }
+        .memory-type p {
+            font-size: 0.68rem;
+            color: #999;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .memory-example {
+            background: #000;
+            padding: 5px;
+            font-size: 0.7rem;
+            color: #666;
+            border-left: 2px solid #333;
+            font-family: 'Courier New', monospace;
+        }
+        .scenario-selector {
+            margin-bottom: 6px;
+        }
+        .scenario-btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: transparent;
+            color: #60A5FA;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .scenario-btn:hover {
+            border-color: #60A5FA;
+        }
+        .scenario-btn.active {
+            border-color: #60A5FA;
+            background: #0F1419;
+        }
+        .retrieval-log {
+            background: #000;
+            border: 1px solid #333;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #CCC;
+            line-height: 1.3;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .retrieval-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        .retrieval-log::-webkit-scrollbar-track {
+            background: #000;
+        }
+        .retrieval-log::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+        .log-line {
+            margin-bottom: 5px;
+        }
+        .log-line.hot { color: #F472B6; }
+        .log-line.warm { color: #A78BFA; }
+        .log-line.cold { color: #60A5FA; }
+        .log-line.result { color: #10B981; }
+        .compression-section {
+            grid-column: 1 / -1;
+            background: #0A0A0A;
+            border: 1px solid #333;
+            padding: 12px;
+        }
+        .compression-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .toggle-label {
+            font-size: 1rem;
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #333;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .toggle-switch.active {
+            background: #60A5FA;
+        }
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: #FFF;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .toggle-switch.active .toggle-slider {
+            left: 33px;
+        }
+        .compression-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            position: relative;
+        }
+        .savings-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #10B981;
+            color: #000;
+            font-size: 1.5rem;
+            font-weight: 700;
+            padding: 15px 25px;
+            border-radius: 8px;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .savings-indicator.visible {
+            opacity: 1;
+        }
+        .compression-box {
+            background: #1A1A1A;
+            border: 2px solid #333;
+            padding: 10px;
+        }
+        .compression-box h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+        }
+        .compression-box.before h3 { color: #F472B6; }
+        .compression-box.after h3 { color: #10B981; }
+        .compression-text {
+            background: #000;
+            padding: 8px;
+            font-size: 0.7rem;
+            color: #CCC;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .compression-stats {
+            display: flex;
+            justify-content: space-around;
+        }
+        .compression-stat {
+            text-align: center;
+        }
+        .compression-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #60A5FA;
+        }
+        .compression-box.after .compression-stat-value {
+            color: #10B981;
+        }
+        .compression-stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .disclaimer {
+            background: #0F1419;
+            border-left: 3px solid #666;
+            padding: 8px 12px;
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: #999;
+            line-height: 1.4;
+        }
+        .disclaimer strong {
+            color: #CCC;
+        }
+        /* Key Takeaway */
+        .key-takeaway {
+            background: #0F1419;
+            border-left: 4px solid #60A5FA;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .takeaway-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #CCC;
+            line-height: 1.5;
+        }
+        .takeaway-text strong {
+            color: #60A5FA;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .copy-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: #60A5FA;
+            border: 2px solid #60A5FA;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        .copy-btn:hover {
+            background: #60A5FA;
+            color: #000;
+        }
+        .copy-btn.copied {
+            background: #10B981;
+            border-color: #10B981;
+            color: #FFF;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Memory & Context Management</h1>
+        <p class="subtitle">3-tier architecture with intelligent retrieval</p>
+
+        <div class="key-takeaway">
+            <div class="takeaway-text">
+                <strong>Key Takeaway:</strong> 3-tier memory architecture balances speed, cost, and coverage - hot for instant access, warm for semantic search, cold for historical archives.
+            </div>
+            <button class="copy-btn" onclick="copyTakeaway()">Copy</button>
+        </div>
+
+        <div class="main-grid">
+            <!-- Left: Tier Architecture -->
+            <div class="section">
+                <h2>Storage Tiers</h2>
+                <div class="tier-diagram">
+                    <div class="tier hot expanded" id="hotTier">
+                        <div class="tier-header" onclick="toggleTier('hotTier')">
+                            <div class="tier-name">Hot Storage</div>
+                            <div class="tier-speed">&lt;10ms</div>
+                        </div>
+                        <div class="tier-content">
+                            <div class="tier-desc">In-memory cache. Current conversation context and recently accessed data.</div>
+                            <div class="tier-stats">
+                                <div class="stat">
+                                    <div class="stat-value">8K tokens</div>
+                                    <div class="stat-label">Typical size</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">~100%</div>
+                                    <div class="stat-label">Hit Rate</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">Negligible</div>
+                                    <div class="stat-label">Cost/query</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tier warm" id="warmTier">
+                        <div class="tier-header" onclick="toggleTier('warmTier')">
+                            <div class="tier-name">Warm Storage</div>
+                            <div class="tier-speed">50-200ms</div>
+                        </div>
+                        <div class="tier-content">
+                            <div class="tier-desc">Vector database. Semantically similar past interactions and knowledge.</div>
+                            <div class="tier-stats">
+                                <div class="stat">
+                                    <div class="stat-value">1M+ vectors</div>
+                                    <div class="stat-label">Typical size</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">~85%</div>
+                                    <div class="stat-label">Hit Rate</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">~$0.001</div>
+                                    <div class="stat-label">Cost/query</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tier cold" id="coldTier">
+                        <div class="tier-header" onclick="toggleTier('coldTier')">
+                            <div class="tier-name">Cold Storage</div>
+                            <div class="tier-speed">500ms-2s</div>
+                        </div>
+                        <div class="tier-content">
+                            <div class="tier-desc">Archive database. Historical data rarely accessed but permanently stored.</div>
+                            <div class="tier-stats">
+                                <div class="stat">
+                                    <div class="stat-value">Unlimited</div>
+                                    <div class="stat-label">Typical size</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">~5%</div>
+                                    <div class="stat-label">Hit Rate</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">~$0.01</div>
+                                    <div class="stat-label">Cost/query</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 15px;">Memory Types</h2>
+                <div class="memory-types">
+                    <div class="memory-type episodic" onclick="toggleMemoryType(this)">
+                        <div class="memory-type-header">
+                            <h3>Episodic Memory</h3>
+                        </div>
+                        <div class="memory-type-content">
+                            <p>Specific past events and experiences tied to time and context.</p>
+                            <div class="memory-example">
+                                "User asked about pricing on 2024-03-15 → Sent detailed quote"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memory-type semantic" onclick="toggleMemoryType(this)">
+                        <div class="memory-type-header">
+                            <h3>Semantic Memory</h3>
+                        </div>
+                        <div class="memory-type-content">
+                            <p>General facts and knowledge independent of personal experience.</p>
+                            <div class="memory-example">
+                                "Python 3.12 was released in October 2023"
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memory-type procedural" onclick="toggleMemoryType(this)">
+                        <div class="memory-type-header">
+                            <h3>Procedural Memory</h3>
+                        </div>
+                        <div class="memory-type-content">
+                            <p>How-to knowledge and learned skills for task execution.</p>
+                            <div class="memory-example">
+                                "To deploy: 1) Run tests 2) Build docker 3) Push to registry"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Retrieval Simulator -->
+            <div class="section">
+                <h2>Retrieval Simulator</h2>
+                <div class="scenario-selector">
+                    <button class="scenario-btn" onclick="runScenario('recent')">Recent Context</button>
+                    <button class="scenario-btn" onclick="runScenario('similar')">Similar Past Task</button>
+                    <button class="scenario-btn" onclick="runScenario('archive')">Historical Data</button>
+                    <button class="scenario-btn" onclick="runScenario('multi')">Multi-Tier Search</button>
+                </div>
+                <div class="retrieval-log" id="retrievalLog">
+                    <div class="log-line">Ready. Select a scenario to simulate retrieval...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compression Section -->
+        <div class="compression-section">
+            <div class="compression-toggle">
+                <div class="toggle-label">Context Compression</div>
+                <div class="toggle-switch" id="compressionToggle" onclick="toggleCompression()">
+                    <div class="toggle-slider"></div>
+                </div>
+                <div style="color: #999; font-size: 0.9rem;">
+                    <span id="compressionStatus">OFF - Full context loaded</span>
+                </div>
+            </div>
+
+            <div class="compression-comparison">
+                <div class="savings-indicator" id="savingsIndicator">68% Savings</div>
+                <div class="compression-box before">
+                    <h3>Without Compression</h3>
+                    <div class="compression-text" id="beforeText">
+                        Loading full conversation history...<br><br>
+                        [Turn 1] User: "Can you help me debug this Python error?"<br>
+                        [Turn 1] Agent: "Of course! Please share the error message and relevant code."<br>
+                        [Turn 2] User: "Here's the code: [Large code file with 500+ lines]"<br>
+                        [Turn 2] Agent: "I see the issue. On line 347, you're trying to access a dictionary key that doesn't exist. You need to add a check..."<br>
+                        [Turn 3] User: "Thanks! That fixed it. Now I have another question about deployment."<br>
+                        [Turn 3] Agent: "Great! What's your deployment question?"<br>
+                        [Turn 4] User: "How do I deploy this to AWS using ECS?"<br>
+                        [Turn 4] Agent: "Here's a complete guide for deploying to AWS ECS..."<br><br>
+                        <strong>Current request:</strong> "What's the weather in Paris?"
+                    </div>
+                    <div class="compression-stats">
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="beforeTokens">~3,800</div>
+                            <div class="compression-stat-label">Tokens</div>
+                        </div>
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="beforeCost">~$0.04</div>
+                            <div class="compression-stat-label">Est. Cost</div>
+                        </div>
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="beforeLatency">~850ms</div>
+                            <div class="compression-stat-label">Latency</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="compression-box after">
+                    <h3>With Compression</h3>
+                    <div class="compression-text" id="afterText">
+                        Compressed context summary:<br><br>
+                        <strong>Previous topics:</strong><br>
+                        - Python debugging (resolved: line 347 access error)<br>
+                        - AWS deployment question (discussed ECS setup)<br><br>
+                        <strong>Current context:</strong><br>
+                        User preferences: Technical level high, prefers concise answers<br>
+                        Active task: Weather inquiry<br><br>
+                        <strong>Current request:</strong> "What's the weather in Paris?"<br><br>
+                        [Unrelated conversation history omitted to save tokens]
+                    </div>
+                    <div class="compression-stats">
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="afterTokens">~1,200</div>
+                            <div class="compression-stat-label">Tokens</div>
+                        </div>
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="afterCost">~$0.01</div>
+                            <div class="compression-stat-label">Est. Cost</div>
+                        </div>
+                        <div class="compression-stat">
+                            <div class="compression-stat-value" id="afterLatency">~200ms</div>
+                            <div class="compression-stat-label">Latency</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            <strong>Note:</strong> Storage sizes, hit rates, latencies, and costs are example values representing typical system characteristics. Actual metrics depend on implementation choices, scale, provider pricing, and workload patterns.
+        </div>
+    </div>
+
+    <script>
+        let compressionEnabled = false;
+
+        const scenarios = {
+            recent: {
+                logs: [
+                    { tier: 'hot', text: 'Query: "What did we discuss about pricing?"' },
+                    { tier: 'hot', text: 'Searching hot storage (in-memory cache)...' },
+                    { tier: 'hot', text: 'Found: 3 messages from current conversation' },
+                    { tier: 'result', text: '✓ Retrieved from HOT (8ms) - Cost: $0' }
+                ],
+                activeTier: 'hot'
+            },
+            similar: {
+                logs: [
+                    { tier: 'hot', text: 'Query: "How did I solve the API timeout last time?"' },
+                    { tier: 'hot', text: 'Searching hot storage... No match' },
+                    { tier: 'warm', text: 'Searching warm storage (vector DB)...' },
+                    { tier: 'warm', text: 'Vector similarity search: top 5 results' },
+                    { tier: 'warm', text: 'Best match: "API timeout resolution" (similarity: 0.89)' },
+                    { tier: 'result', text: '✓ Retrieved from WARM (145ms) - Cost: $0.001' }
+                ],
+                activeTier: 'warm'
+            },
+            archive: {
+                logs: [
+                    { tier: 'hot', text: 'Query: "What was the Q1 2023 sales report?"' },
+                    { tier: 'hot', text: 'Searching hot storage... No match' },
+                    { tier: 'warm', text: 'Searching warm storage... No match' },
+                    { tier: 'cold', text: 'Searching cold storage (archive DB)...' },
+                    { tier: 'cold', text: 'Full-text search: "Q1 2023 sales"' },
+                    { tier: 'cold', text: 'Found: 1 document from 2023-04-05' },
+                    { tier: 'result', text: '✓ Retrieved from COLD (1.2s) - Cost: $0.01' }
+                ],
+                activeTier: 'cold'
+            },
+            multi: {
+                logs: [
+                    { tier: 'hot', text: 'Query: "Summarize customer feedback on feature X"' },
+                    { tier: 'hot', text: 'Searching hot storage... Partial match (2 items)' },
+                    { tier: 'warm', text: 'Searching warm storage... Found 15 similar items' },
+                    { tier: 'cold', text: 'Searching cold storage... Found 43 historical items' },
+                    { tier: 'result', text: '✓ Multi-tier: HOT(2) + WARM(15) + COLD(43) = 60 total' },
+                    { tier: 'result', text: '✓ Total time: 1.4s - Cost: $0.012' }
+                ],
+                activeTier: 'all'
+            }
+        };
+
+        async function runScenario(type) {
+            const scenario = scenarios[type];
+            const log = document.getElementById('retrievalLog');
+            log.innerHTML = '';
+
+            // Reset tiers
+            document.getElementById('hotTier').classList.remove('active');
+            document.getElementById('warmTier').classList.remove('active');
+            document.getElementById('coldTier').classList.remove('active');
+
+            for (const entry of scenario.logs) {
+                await sleep(400);
+                const line = document.createElement('div');
+                line.className = `log-line ${entry.tier}`;
+                line.textContent = entry.text;
+                log.appendChild(line);
+                log.scrollTop = log.scrollHeight;
+
+                // Highlight active tier
+                if (entry.tier === 'hot') {
+                    document.getElementById('hotTier').classList.add('active');
+                } else if (entry.tier === 'warm') {
+                    document.getElementById('warmTier').classList.add('active');
+                } else if (entry.tier === 'cold') {
+                    document.getElementById('coldTier').classList.add('active');
+                }
+            }
+        }
+
+        function toggleCompression() {
+            compressionEnabled = !compressionEnabled;
+            const toggle = document.getElementById('compressionToggle');
+            const status = document.getElementById('compressionStatus');
+            const indicator = document.getElementById('savingsIndicator');
+
+            if (compressionEnabled) {
+                toggle.classList.add('active');
+                status.textContent = 'ON - Intelligent summarization active';
+                indicator.classList.add('visible');
+            } else {
+                toggle.classList.remove('active');
+                status.textContent = 'OFF - Full context loaded';
+                indicator.classList.remove('visible');
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function toggleTier(id) {
+            const tier = document.getElementById(id);
+            const wasExpanded = tier.classList.contains('expanded');
+
+            // If trying to close the only expanded tier, don't allow it
+            const expandedTiers = document.querySelectorAll('.tier.expanded');
+            if (wasExpanded && expandedTiers.length === 1) {
+                return; // Keep at least one tier open
+            }
+
+            // Close all tiers
+            document.querySelectorAll('.tier').forEach(t => t.classList.remove('expanded'));
+
+            // Open clicked tier if it wasn't already open
+            if (!wasExpanded) {
+                tier.classList.add('expanded');
+            } else {
+                // If closing current, open the first tier as default
+                document.getElementById('hotTier').classList.add('expanded');
+            }
+        }
+
+        function toggleMemoryType(element) {
+            const wasExpanded = element.classList.contains('expanded');
+
+            // If trying to close the only expanded type, don't allow it
+            const expandedTypes = document.querySelectorAll('.memory-type.expanded');
+            if (wasExpanded && expandedTypes.length === 1) {
+                return; // Keep at least one type open
+            }
+
+            // Close all memory types
+            document.querySelectorAll('.memory-type').forEach(mt => mt.classList.remove('expanded'));
+
+            // Open clicked memory type if it wasn't already open
+            if (!wasExpanded) {
+                element.classList.add('expanded');
+            } else {
+                // If closing current, open the first type as default
+                document.querySelector('.memory-type.episodic').classList.add('expanded');
+            }
+        }
+
+        // Copy Takeaway
+        function copyTakeaway() {
+            const text = "3-tier memory architecture balances speed, cost, and coverage - hot for instant access, warm for semantic search, cold for historical archives.";
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

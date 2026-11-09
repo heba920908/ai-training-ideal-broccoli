@@ -1,0 +1,1492 @@
+<!doctype html>
+<html lang="en">
+
+<script>
+  // Timeline data - edit this section to update content
+  const timelineData = {
+    phases: [
+     {
+        type: "none",
+        id: "introduction",
+        label: "Introduction",
+        color: "rgba(110,231,255,.25)",
+        lane: "",
+        descriptionHtml: `
+        It's a simplified scheme that helps to understand the main stages of the project and key decision points. 
+        The scheme is not a strict timeline, but rather a <m>guide for the project</m>.
+        Stages can be repeated or missing depending on the project, approach to implementation, team and client. But the main idea remains the same.
+        <br><br>
+      <m>Workflow can be different</m> - in some cases we can have Prototype phase and billable PoC, in some cases we can do PoC for free. 
+      In general, we are looking for long relationship with the client and product implementation, not just
+      PoC, but of course, it depends on the project setup and client's asks.
+      <br><br>
+      <m>Concrete phases depend on project setup and client's requirements</m>. For example, in some cases, the client asked
+      to implement "something with GenAI" just to try GenAI. In such cases it's not critical to have clear product vision
+      or final quality output, but still important to find good use cases and make good impression about EPAM and
+      our expertise in GenAI.
+      <br><br>
+      <m>Click on the phase or checkpoint to see the description or use navigation buttons on the top of the page</m>.
+      <br><br>
+      There are buttons for <m>additional information</m> and <m>links to sources</m> on the right.
+
+        `
+     
+      },
+      {
+        type: "block",
+        id: "use-cases",
+        label: "Business<br>cases",
+        optional: true,
+        color: "rgba(110,231,255,.25)",
+        lane: "Users, SME",
+        descriptionHtml: `
+          If we have no clear business case our task is to find it. <m>Do not ask business users directly where they can use LLM/GenAI</m>. 
+          They can have no knowledge about GenAI or their vision is only limited by ChatGPT. Try to find another way to ask. 
+          <br><br>
+          <m>Example of a question</m>: imagine that you have an unlimited number of trainee or junior students. you can assign them some work,
+           providing clear and understandable instructions. what work could you delegate?
+          <br><br>
+            <m>Where to look for opportunities for AI:</m> 
+            <ul>
+                <li>Repetitive, routine tasks that take time</li>  
+                <li>Tasks that are difficult due to work conditions (for example, small print or unfamiliar language)</li>  
+                <li>Bottlenecks where a lot of expertise is needed</li>  
+                <li>Situations with uncertainty where it is hard for people to start work</li>  
+                <li>GenAI should complement people, freeing them from unnecessary manual work and helping with mental blocks.</li>  
+            </ul>
+          The result is definition of business case with clear business vision and understanding that GenAI is useful and helpful here.
+          <m>Do not use GenAI if you can resolve the problem with deterministic methods.</m>
+          <br><br>
+          <m>Use prioritization</m> to choose use cases. It can be a simple formula, for example, ROI= Business Value / Implementation Cost * Risks.
+          Use prioritization not based on technology, but on business impact, benefits, and real feasibility.
+        `,
+        sub_phases: [
+          "Client interview",
+          "AI Suitability Check",
+          "Success Criteria Definition",
+          "Business Value Assessment",
+          "Prioritization"
+        ],
+        links: [
+          {
+            label: "Identifying and Scaling AI Use Cases (OpenAI)",
+            url: "https://cdn.openai.com/business-guides-and-resources/identifying-and-scaling-ai-use-cases.pdf"
+          },
+          {
+            label: "How to find right business use cases for Generative AI (MIT Sloan)",
+            url: "https://mitsloan.mit.edu/ideas-made-to-matter/how-to-find-right-business-use-cases-generative-ai"
+          },
+          {
+            label: "How to identify the most impactful GenAI use case (Microsoft)",
+            url: "https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/how-to-identify-the-most-impactful-genai-use-case/4150016"
+          },
+          {
+            label: "How I use LLMs (Andrej Karpathy)",
+            url: "https://www.youtube.com/watch?v=EWvNQjAaOHw"
+          }
+        ],
+        sdlc: `
+        <ul>
+        <li>Analysis of interviews/surveys — extracting insights from client meeting transcripts  
+        <li>Market research — searching and analyzing similar cases, competitors  
+        <li>Question generation — preparing questions for discovery sessions
+        </ul>
+        `
+      },
+      {
+        type: "check_point",
+        id: "cp1",
+        label: "Check point 1",
+        color: "rgba(110,231,255,.35)",
+        descriptionHtml: `
+            <ul>
+            <li>Do we have clearly defined use case with business value?</li>
+            <li>Who are our users?</li>
+            <li>Do we have SME or skills in the domain?</li>
+            <li>Do we have data (in general, quality will be validate later)?</li>
+            </ul>
+          This checkpoint validates that we have a foundation: a clear use case that delivers business value, 
+          identified users, and a Subject Matter Expert who understands the domain.
+        `
+      },
+      {
+        type: "block",
+        id: "prototype",
+        label: "Prototype",
+        color: "rgba(110,231,255,.25)",
+        lane: "Architect",
+        descriptionHtml: `
+          <m>Focus only on prototype</m>, work can be done in notebooks or even in playground. At the end of this stage, 
+          we must have go/no-go with the main idea from architect side. It's mostly technical decision.
+          <br><br>
+          <m>Example 1</m>: If you have data in PDF format, you can manually extract text and use it as input for LLM.
+          Later, you can decide how to extract text from PDF automatically, but at this stage, you should answer the simple question:
+          Can the data be used to have good enough quality output? Not ideal output, but good enough for the prototype.
+          <br><br>
+          <m>Example 2</m>: Classification of data from some external source (for example, data from API).
+          Focus on understanding if the data can be used for classification?
+          Reading and parsing data from API is not what should be done at this stage.
+          <br><br>
+          <m>Avoid complex discussions about CI/CD, git and commit strategies etc.</m> This stage is very short, 
+          no time for discussions about topics that are not relevant to the final decision, make all as simple as possible. 
+          Also, you should collect risks and assumptions for Contract and prepare information for Product vision.
+          <br><br>
+          Use the most powerful models for the prototype to quickly test the hypothesis, but do not forget about the cost of the production solution.
+          Too high cost may be unacceptable for the client.
+        `,
+        sub_phases: [
+          "Data Sufficiency Check"
+        ],
+        sdlc: `
+        <ul>
+        <li>Fast prototyping — creating a prototype of the solution
+        <li>Clickable prototype — creating a clickable prototype of the solution  
+        </ul>
+        `
+
+      },
+      {
+        type: "check_point",
+        id: "cp2",
+        label: "Check point 2",
+        color: "rgba(110,231,255,.35)",
+        descriptionHtml: `
+          Technical approval: does it make sense to use an LLM here? Is it potentially possible?
+          Architect validation of feasibility via prototype. This is a technical go/no-go decision.
+        `
+      },
+      {
+        type: "block",
+        id: "requirements",
+        label: "Requirements",
+        color: "rgba(110,231,255,.25)",
+        lane: "Business, SME",
+        descriptionHtml: `
+          Capture business goals, constraints, data sources, target users etc. No difference with classical requirements.
+          Also think about ROI (if applicable) and business value.
+          <br><br>
+          Define <m>success criteria</m> and evaluation approach early. Imagine that tomorrow you need to show the results of this work.
+          What success criteria will you use? How will you evaluate the results? <m>Why users will trust the result?</m>
+          <br><br>
+          Take a look at <m>non-functional requirements</m>, specific to the LLM world, for example:
+          <ul>
+            <li>Possible model hallucinations and mistakes (handling and responsibility)</li>
+            <li>Human in the loop for critical decisions</li>
+            <li>Security and data privacy: prompt injection, data leakage, data privacy</li>
+            <li>Possible model drift (with external model provider)</li>
+            <li>Expected latency (streaming vs request/response).</li>
+            <li>Cost limits (budget on tokens per month).</li>
+          </ul>
+          Check if you can collect <m>golden (validation) dataset</m> for the solution and start collecting it. It will be critical for the quality of the solution.
+          If data is not available, propose the architecture for <m>data collection during pilot phase</m>.
+        `,
+        sdlc: `
+        <ul>
+        <li>Analysis of interviews/surveys — extracting insights from client meeting transcripts  
+        <li>Generation of user stories — based on business goals  
+        </ul>
+        `
+      },
+      {
+        type: "block",
+        id: "product-vision",
+        label: "Product vision",
+        optional: true,
+        color: "rgba(110,231,255,.25)",
+        lane: "Business, SME",
+        descriptionHtml: `
+        This step is optional, only if you have a product development.
+        <br><br>
+          Form a clear product vision: what the solution is, who it serves, and how it creates measurable value. 
+          Align stakeholders on scope, roadmap, and what “good” looks like.
+        `,
+        sdlc: `
+        <ul>
+        <li>Drafting PRD — draft of Product Requirements Document
+        <li>Competitive analysis — collecting and comparing solutions in the market 
+        </ul>
+        `
+      },
+      {
+        type: "check_point",
+        id: "cp3",
+        label: "Check point 3",
+        color: "rgba(110,231,255,.35)",
+        descriptionHtml: `
+            <ul>
+            <li>Decision about product (optional).</li>
+            <li>Decision about licenses and IP.</li>
+            <li>Prepare information for SOW.</li>
+            </ul>
+          
+        `
+      },
+      {
+        type: "block",
+        id: "contract",
+        label: "Contract",
+        color: "rgba(110,231,255,.25)",
+        lane: "Legal",
+        descriptionHtml: `
+          Prepare the Contract (SOW): scope, deliverables, timeline, assumptions, risks, responsibilities, 
+          acceptance criteria, and commercial/legal terms.
+          <br><br>
+          In addition to the standard risks that apply to any application with external dependency (LLM API), it is necessary to consider specific <m>risks related to LLM</m>.
+        `,
+        notes: `
+          Here is some <m>examples of risks</m>:  
+            <ul>  
+            <li>Hallucinations and Output Unpredictability. Define responsibility, who is responsible for possible hallucinations, require human verification for critical decisions.</li>  
+            <li>Toxic/Harmful Content Generation. Integrate toxicity filters; use human-in-the-loop review.</li>  
+            <li>Prompt Injection. Sanitize inputs; monitor prompt patterns. Define responsibility for possible prompt injection.</li>  
+            <li>Model drift or obsolete. The external provider may replace the model or remove the model.</li>  
+            <li>Sensitive Data Leakage. Define access to information at a level higher than the model.</li>  
+            <li>Data Privacy. Set up Training Data Privacy - what data can be used in requests to LLM, what are the limitations.</li>  
+            </ul>
+        `,
+        links: [
+          {
+            label: "OWASP Top 10 for Large Language Model Applications",
+            url: "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+          },
+          {
+            label: "NIST AI Risk Management Framework",
+            url: "https://www.nist.gov/itl/ai-risk%2Dmanagement-framework"
+          },
+          {
+                label: "OpenAI Safety Best Practices",
+                url: "https://platform.openai.com/docs/guides/safety-best-practices"
+          },
+            {
+                label: "Microsoft AI Security Guidelines",
+                url: "https://learn.microsoft.com/en-us/security/ai-red-team/"
+            },
+            {
+                label: "Guardrails AI",
+                url: "https://github.com/guardrails-ai/guardrails"
+            },
+            {
+                label: "LangChain Guardrails",
+                url: "https://docs.langchain.com/oss/python/langchain/guardrails"
+            },
+
+        ],
+        sdlc: `
+        <ul>
+        <li>Risk analysis — identifying potential issues in SOW  
+        <li>Template generation — creating contract sections  
+        <li>Completeness check — checklist for SOW (scope, deliverables, acceptance criteria)  
+        </ul>
+        `
+      },
+      {
+        type: "check_point",
+        id: "cp4",
+        label: "Check point 4",
+        color: "rgba(110,231,255,.35)",
+        descriptionHtml: `
+        Legal approval: is the contract (SOW) valid and acceptable for all parties?
+        `
+      },
+
+      {
+        type: "block",
+        id: "poc",
+        label: "PoC",
+        color: "rgba(251,191,36,.25)",
+        lane: "SME",
+        descriptionHtml: `
+          <m>The idea of PoC is proof of the concept</m>. Here we should think also about quality measurement and metrics. 
+          <br><br>
+          At the end of this stage, we must have go/no-go with the concept from SME. 
+          <ul>
+          <li>Answer to the question "will the solution be valuable for users/business"?</li>
+          <li>Critical questions: do we have all data? can we have good enough quality in future?</li>
+          <li>Be sure that you use only frameworks and libraries that are allowed for commercial usage.</li>
+          <li>Prepare requirements for infrastructure and be sure that the solution will have access to the data in production</li>
+          <li>Security questions can take long time, think about it in advance.</li>
+          <li>In some cases, it's ok to run the solution with a powerful model and avoid a heavy production-grade code base.</li>
+          <li>Try to keep the PoC simple, end-to-end, and cover the major aspects of the future solution.</li>
+          </ul>
+        `
+      },
+      {
+        type: "check_point",
+        id: "cp5",
+        label: "Check point 5",
+        color: "rgba(251,191,36,.35)",
+        descriptionHtml: `
+          SME approval: is PoC output valuable and useful to achieve business goals?
+          Validate business value, data readiness, expected quality in future, and the full end-to-end PoC result.
+        `
+      },
+      {
+        type: "block",
+        id: "mvp",
+        label: "MVP",
+        color: "rgba(251,191,36,.25)",
+        lane: "User focus group",
+        descriptionHtml: `
+          Build a Minimum Viable Product (MVP) that is usable by a small group. Focus on the smallest feature set that delivers 
+          value with clear UX and reliable outputs.
+          <br><br>
+          Be sure that the solution is <m>scalable</m> and can be easily extended (per data count, per user count, per request count).
+        `,
+        sdlc:`  
+            Obvious SDLC usage: development, code review, testing, deployment, monitoring, etc. 
+        `
+      },
+      {
+        type: "block",
+        id: "qa",
+        label: "QA & <br>Evaluation",
+        color: "rgba(251,191,36,.25)",
+        lane: "User focus group",
+        descriptionHtml: `
+          Test the solution: functional QA, security checks, performance, regression, and evaluation on golden datasets. 
+          Validate quality metrics and failure modes before wider exposure.
+          <br><br>
+          Use validation based on <m>golden dataset</m> for quality evaluation, single manual tests are not effective and not enough.
+          <br><br>
+          <m>Visualize the results of testing</m>. It will help to understand the way to improve the solution.
+        `,
+        sdlc:`
+        <ul>
+        <li>Test generation — unit, integration, e2e tests  
+        <li>Test data generation  
+        <li>Result analysis — visualization and interpretation of metrics  
+        <li>Special dashboard generation  
+        <li>Bug triage — categorization and prioritization of bugs          
+        </ul>
+        `
+      },
+      {
+        type: "block",
+        id: "acceptance",
+        label: "Acceptance",
+        color: "rgba(167,139,250,.25)",
+        lane: "Users",
+        descriptionHtml: `
+          At the end of this stage, we will open our solution for a small user group and perform QA and acceptance.
+          <p>We must have CI/CD, version and quality control here (exceptions are possible only if approved by the client 
+          in written form), and infrastructure (preferably on the client side). If we have many users, we should think about
+          token limits and load balancer usage in production.
+          Do not use notebooks here. Check if infrastructure will have internet access (implement offline model/weights 
+          downloading if needed). Ensure an end-to-end solution and valuable, clear output for end users.
+        `,
+        sdlc:`
+        <ul>
+        <li>User documentation generation — user guides, FAQ  
+        <li>Release notes — auto-generation of changelog  
+        <li>Training materials — creation of training materials  
+        </ul>
+        `
+      },
+      {
+        type: "check_point",
+        id: "cp6",
+        label: "Check point 6",
+        color: "rgba(167,139,250,.35)",
+        descriptionHtml: `
+          User approval and acceptance.
+          End users validate that the solution is useful, understandable, and acceptable for real workflows.
+        `
+      },
+      {
+        type: "block",
+        id: "rollout",
+        label: "Roll out",
+        color: "rgba(167,139,250,.25)",
+        lane: "Users",
+        descriptionHtml: `
+          Gradual rollout to more users with monitoring and controlled risk. Keep CI/CD, versioning, and quality controls. 
+          Plan capacity: token limits, concurrency, rate limits, and load balancing.
+        `
+      },
+      {
+        type: "block",
+        id: "product",
+        label: "Product",
+        color: "rgba(167,139,250,.25)",
+        lane: "Users",
+        descriptionHtml: `
+          Production stage: stable operations, clear SLAs, observability, incident response, and continuous evaluation. 
+          Maintain a roadmap for improvements based on user feedback and metrics.
+        `
+      },
+      {
+        type: "block",
+        id: "support",
+        label: "Support",
+        color: "rgba(167,139,250,.25)",
+        lane: "Users",
+        descriptionHtml: `
+          Ongoing support: handle incidents, user questions, retraining/tuning requests, data updates, and operational costs. 
+          Maintain documentation and runbooks.
+        `,
+        sdlc:`
+        <ul>
+        <li>Incident analysis — RCA (root cause analysis)  
+        <li>Feature requests analysis — clustering of user requests  
+        <li>Knowledge base — generation and updating of FAQ  
+        <li>Ticket classification — automatic categorization of inquiries  
+        <li>Response drafts — drafts of replies to typical questions
+        </ul>
+        `
+      },
+      {
+        type: "block",
+        id: "tuning",
+        label: "Tuning",
+        color: "rgba(167,139,250,.25)",
+        lane: "Users",
+        descriptionHtml: `
+          Improve quality and costs over time: prompts, retrieval, guardrails, evaluation sets, and (if applicable) fine-tuning. 
+          Iterate based on measured outcomes, not only intuition.
+        `
+      }
+    ],
+
+  };
+</script>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Timeline, stages and checkpoints — GenAI projects</title>
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --panel:#0E1630;
+      --panel2:#0B142B;
+      --text:#EAF0FF;
+      --muted:#A7B4D8;
+      --line:#2B3A6A;
+      --accent:#6EE7FF;
+      --accent2:#A78BFA;
+      --good:#34D399;
+      --warn:#FBBF24;
+      --bad:#FB7185;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    m{
+      color:var(--warn);
+      font-weight:700;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(110,231,255,.12), transparent 60%),
+        radial-gradient(1000px 700px at 80% 30%, rgba(167,139,250,.10), transparent 65%),
+        radial-gradient(900px 600px at 50% 90%, rgba(52,211,153,.07), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:24px 18px 28px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    header .right-section{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .title h1{
+      margin:0;
+      font-size:20px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    .title p{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+      max-width:78ch;
+    }
+    .copyright{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:500;
+      letter-spacing:0.3px;
+      padding:6px 12px;
+      background:linear-gradient(135deg, rgba(110,231,255,.08), rgba(167,139,250,.06));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
+      backdrop-filter:blur(8px);
+    }
+    .copyright::before{
+      content:"©";
+      font-size:13px;
+      font-weight:700;
+      color:var(--accent);
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(14,22,48,.85), rgba(11,20,43,.72));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    button{
+      border:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+      font-size:13px;
+      font-weight:500;
+      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease;
+      white-space:nowrap;
+      position:relative;
+    }
+    button:hover{border-color:rgba(110,231,255,.35)}
+    button:active{transform:translateY(1px)}
+
+    .timeline-shell{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      box-shadow:0 14px 36px rgba(0,0,0,.30);
+      padding:4px 12px 10px;
+      overflow:hidden;
+    }
+
+    /* Sub-phases (sub-steps) slot under the phase diagram.
+       It keeps a fixed height so the layout doesn't jump even when empty. */
+    .subphases-shell{
+      margin-top:10px;
+      height:72px;
+      min-height:72px;
+      max-height:72px;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .subphases-shell.is-empty{
+      border-color:transparent;
+      background:transparent;
+    }
+    .subphases{
+      width:100%;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:2px 2px 10px;
+      scroll-snap-type:x proximity;
+      scrollbar-width:thin;
+      scrollbar-color: rgba(110,231,255,.28) rgba(255,255,255,.06);
+    }
+    .subphases-shell.is-empty .subphases{
+      visibility:hidden; /* preserve space but show nothing */
+    }
+    .subphase-pill{
+      scroll-snap-align:start;
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(110,231,255,.10);
+      border:1px solid rgba(110,231,255,.20);
+      color:rgba(234,240,255,.92);
+      font-size:12px;
+      font-weight:650;
+      white-space:nowrap;
+    }
+    .timeline-title .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: rgba(110,231,255,.25);
+      box-shadow: 0 0 0 3px rgba(110,231,255,.10);
+      flex-shrink:0;
+    }
+    .timeline-title strong{
+      color:var(--text);
+      font-weight:650;
+      font-size:14px;
+      letter-spacing:.2px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:min(72ch, 62vw);
+      display:block;
+    }
+    .timeline-title span{
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    svg.timeline{
+      display:block;
+      width:100%;
+      height:auto;
+      user-select:none;
+    }
+    .timeline .phase-hit,
+    .timeline .cp-hit{ cursor:pointer; }
+    /* Remove browser default focus outline (white frame) for SVG interactive groups */
+    .timeline [data-kind][data-id]{ outline:none; }
+    .timeline [data-kind][data-id]:focus{ outline:none; }
+    .timeline .label{
+      fill: rgba(234,240,255,.94);
+      font-size:15px;
+      font-weight:700;
+      pointer-events:none;
+    }
+    /* Optional stages: slightly dim label text to distinguish from regular stages */
+    .timeline .is-optional .label{
+      fill: rgba(234,240,255,.72);
+    }
+    .timeline .sublabel{
+      fill: rgba(167,180,216,.92);
+      font-size:11px;
+      pointer-events:none;
+    }
+    .timeline .phase-rect{
+      fill: rgba(255,255,255,.03);
+      stroke: rgba(255,255,255,.16);
+      stroke-width:2;
+    }
+    .timeline .phase-rect:hover{
+      stroke: rgba(110,231,255,.55);
+    }
+    .timeline .active-glow{
+      fill: transparent;
+      stroke: rgba(251,191,36,.92);
+      stroke-width:2.5;
+      opacity:0;
+      filter:url(#softGlow);
+      pointer-events:none;
+    }
+    .timeline .is-active .active-glow{ opacity:1; }
+    /* Keep an accessible focus indicator without the default white outline */
+    .timeline [data-kind][data-id]:focus-visible .active-glow{ opacity:1; }
+    .timeline .cp-circle{
+      fill: rgba(110,231,255,.16);
+      stroke: rgba(110,231,255,.42);
+      stroke-width:2;
+      filter:url(#softGlow);
+    }
+    .timeline .cp-circle:hover{
+      stroke: rgba(110,231,255,.70);
+    }
+    .timeline .cp-text{
+      fill: rgba(234,240,255,.95);
+      font-size:12px;
+      font-weight:800;
+      pointer-events:none;
+    }
+    .timeline .cp-stem{
+      stroke: rgba(110,231,255,.30);
+      stroke-width:2;
+      stroke-linecap:round;
+      opacity:.9;
+    }
+    .timeline .connector{
+      stroke: rgba(110,231,255,.24);
+      stroke-width:4;
+      stroke-linecap:round;
+      opacity:.9;
+    }
+    .timeline .lane-seg{
+      stroke: rgba(255,255,255,.10);
+      stroke-width:1;
+    }
+    .timeline .lane-text{
+      fill: rgba(234,240,255,.90);
+      font-size:13px;
+      font-weight:700;
+      pointer-events:none;
+    }
+
+    .description-panel{
+      position:relative;
+      padding:14px 14px 10px;
+      display:flex;
+      gap:10px;
+      /* Stretch content to full height so .desc-body can scroll */
+      align-items:stretch;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.55;
+      background:rgba(251,191,36,.08);
+      border-left:3px solid var(--warn);
+      border-radius:8px;
+      height:320px;
+      min-height:320px;
+      max-height:320px;
+      overflow:hidden;
+    }
+    .desc-icon{
+      flex-shrink:0;
+      width:16px;
+      height:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      color:var(--warn);
+      font-size:13px;
+      margin-top:2px;
+    }
+    .desc-body{
+      overflow-y:auto;
+      flex:1;
+      min-height:0;
+      min-width:0;
+      -webkit-overflow-scrolling: touch;
+      word-wrap:break-word;
+      overflow-wrap:break-word;
+      /* Right gutter so scrollbar never overlaps the action icons */
+      margin-right:34px;
+      padding-right:10px;
+    }
+    .desc-label{
+      font-size:12px;
+      font-weight:750;
+      color:var(--warn);
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      margin-bottom:8px;
+    }
+    .desc-content p{margin:0 0 12px 0}
+    .desc-content p:last-child{margin-bottom:0}
+    .desc-content strong{color:var(--accent); font-weight:650}
+    .desc-links-list{margin:0; padding-left:18px}
+    .desc-links-list li{margin:0 0 8px 0}
+    .desc-links-list li:last-child{margin-bottom:0}
+    .desc-links-list a{color:var(--accent); text-decoration:underline; text-underline-offset:2px}
+    .desc-links-list a:hover{color:var(--text)}
+
+    /* Details view tabs (Description / Notes / SDLC / Links) */
+    .description-panel .panel-actions{
+      position:absolute;
+      top:8px;
+      right:10px;
+      z-index:3;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .description-panel .panel-action{
+      background:none;
+      border:none;
+      cursor:pointer;
+      padding:4px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:8px;
+      transition: background-color 0.2s ease;
+      color: var(--muted);
+    }
+    .description-panel .panel-action[data-tab="description"]{ color: rgba(110,231,255,.92); }
+    .description-panel .panel-action[data-tab="notes"]{ color: rgba(251,191,36,.95); }
+    .description-panel .panel-action[data-tab="sdlc"]{ color: rgba(52,211,153,.95); }
+    .description-panel .panel-action[data-tab="links"]{ color: rgba(167,139,250,.95); }
+
+    .description-panel .panel-action:hover{
+      background-color: rgba(255,255,255,.06);
+    }
+    .description-panel .panel-action svg{
+      width:18px;
+      height:18px;
+      fill: currentColor;
+      transition: opacity 0.2s ease;
+      opacity:.9;
+    }
+    .description-panel .panel-action:hover svg{
+      opacity:1;
+    }
+    .description-panel .panel-action[aria-pressed="true"]{
+      background-color: rgba(255,255,255,.08);
+    }
+    .description-panel .panel-action:disabled{
+      cursor:default;
+      opacity:.35;
+      color: var(--muted);
+    }
+    .description-panel .panel-action:focus-visible{
+      outline: 2px solid rgba(110,231,255,.25);
+      outline-offset: 2px;
+    }
+    /* (Removed fade-in on content update to avoid scrollbar flicker) */
+
+    @media (max-width: 768px) {
+      .wrap{padding:16px 12px 20px}
+      .title h1{font-size:18px}
+      .card{padding:14px}
+      button{font-size:12px; padding-top:8px; padding-bottom:8px}
+      .timeline-shell{padding:10px 10px 8px}
+      .subphases-shell{
+        height:64px;
+        min-height:64px;
+        max-height:64px;
+        padding:6px 8px;
+      }
+      .subphases{padding-bottom:8px}
+      .subphase-pill{font-size:11px; padding:7px 9px}
+      .description-panel{
+        height:clamp(180px, 34vh, 260px);
+        min-height:clamp(180px, 34vh, 260px);
+        max-height:clamp(180px, 34vh, 260px);
+        font-size:13px;
+        padding:10px 10px 8px;
+      }
+      .description-panel .panel-actions{
+        top:6px;
+        right:8px;
+      }
+      .description-panel .panel-action{ border-radius:7px; }
+    }
+    .sr-only{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Timeline, stages and checkpoints</h1>
+        <p>GenAI project workflow with phases and key decision points.</p>
+      </div>
+      <div class="right-section">
+        <div class="copyright">2026 Pavel Agurov, v.04</div>
+        <div class="controls" aria-label="Navigation">
+          <button id="btnPrev" type="button" title="Previous item" aria-label="Previous item">←</button>
+          <button id="btnNext" type="button" title="Next item" aria-label="Next item">→</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="card" aria-label="GenAI project timeline">
+      <div class="timeline-shell" aria-label="Interactive timeline">
+        <!-- Hidden (used by JS). Visible header removed to save space. -->
+        <div id="currentMeta" style="display:none" aria-hidden="true">
+          <span class="dot" id="currentDot"></span>
+          <span id="currentKind">Current</span>
+          <strong id="currentLabel">Use cases</strong>
+          <span id="currentA11y"></span>
+        </div>
+
+        <svg class="timeline" id="timelineSvg" viewBox="0 0 1500 240" role="img" aria-label="Timeline diagram: phases and checkpoints">
+          <defs>
+            <linearGradient id="gPanel" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,.08)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,.03)"/>
+            </linearGradient>
+            <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feColorMatrix in="b" type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 .55 0" result="a"/>
+              <feMerge>
+                <feMergeNode in="a"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <g id="timelineG"></g>
+        </svg>
+
+        <!-- Sub-phases slot (keeps fixed height; may show nothing) -->
+        <div class="subphases-shell is-empty" id="subPhasesShell" aria-label="Sub-steps">
+          <div class="subphases" id="subPhases" role="list" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="description-panel" id="descPanel" role="region" aria-live="polite" aria-label="Details">
+        <div class="panel-actions" aria-label="Details view">
+          <button class="panel-action" id="tabDescription" type="button" data-tab="description" title="Main description" aria-label="Main description" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+            </svg>
+          </button>
+          <button class="panel-action" id="tabNotes" type="button" data-tab="notes" title="Notes" aria-label="Notes" aria-pressed="false" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 6h-2v9H7v2c0 .55.45 1 1 1h10l4 4V7c0-.55-.45-1-1-1zM17 12V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/>
+            </svg>
+          </button>
+          <button class="panel-action" id="tabSdlc" type="button" data-tab="sdlc" title="SDLC" aria-label="SDLC" aria-pressed="false" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 2H6c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 6H6V4h8v4zM18 6h2v14c0 1.1-.9 2-2 2H6v-2h12V6zM10 12H6c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2zm0 6H6v-4h4v4z"/>
+            </svg>
+          </button>
+          <button class="panel-action" id="tabLinks" type="button" data-tab="links" title="Links" aria-label="Links" aria-pressed="false" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3.9 12a5 5 0 0 1 5-5H12v2H8.9a3 3 0 1 0 0 6H12v2H8.9a5 5 0 0 1-5-5zm6.1 1h4v-2h-4v2zm5.1-6H12V5h3.1a5 5 0 0 1 0 10H12v-2h3.1a3 3 0 1 0 0-6z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="desc-body">
+          <div class="desc-label" id="descLabel">Selected</div>
+          <div class="desc-pane" id="paneDescription" aria-label="Description">
+            <div class="desc-content" id="descContent">
+              <p>Click a phase or a checkpoint above to see its description.</p>
+            </div>
+          </div>
+          <div class="desc-pane" id="paneNotes" aria-label="Notes" hidden>
+            <div class="desc-label sr-only">Notes</div>
+            <div class="desc-content" id="descNotes"></div>
+          </div>
+          <div class="desc-pane" id="paneSdlc" aria-label="SDLC" hidden>
+            <div class="desc-label sr-only">SDLC</div>
+            <div class="desc-content" id="descSdlc"></div>
+          </div>
+          <div class="desc-pane" id="paneLinks" aria-label="Links" hidden>
+            <div class="desc-label sr-only">Links</div>
+            <ul class="desc-links-list" id="descLinks"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    (() => {
+      const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
+
+      const btnPrev = $("btnPrev");
+      const btnNext = $("btnNext");
+      const descLabel = $("descLabel");
+      const descContent = $("descContent");
+      const descPanel = $("descPanel");
+      const descNotes = $("descNotes");
+      const descSdlc = $("descSdlc");
+      const descLinks = /** @type {HTMLUListElement} */($("descLinks"));
+      const tabDescription = /** @type {HTMLButtonElement} */($("tabDescription"));
+      const tabNotes = /** @type {HTMLButtonElement} */($("tabNotes"));
+      const tabSdlc = /** @type {HTMLButtonElement} */($("tabSdlc"));
+      const tabLinks = /** @type {HTMLButtonElement} */($("tabLinks"));
+      const paneDescription = $("paneDescription");
+      const paneNotes = $("paneNotes");
+      const paneSdlc = $("paneSdlc");
+      const paneLinks = $("paneLinks");
+      const currentDot = /** @type {HTMLSpanElement} */($("currentDot"));
+      const currentKind = $("currentKind");
+      const currentLabel = $("currentLabel");
+      const currentA11y = $("currentA11y");
+      const timelineG = /** @type {SVGGElement} */(document.getElementById("timelineG"));
+      const subPhasesShell = $("subPhasesShell");
+      const subPhasesEl = $("subPhases");
+
+      /** @type {{type: 'none'|'block'|'check_point', id: string} | null} */
+      let active = null;
+      /** @type {{type:'none'|'block'|'check_point', id:string}[]} */
+      let navOrder = [];
+      /** @type {'description'|'notes'|'sdlc'|'links'} */
+      let activeTab = "description";
+      /** @type {string} */
+      let activeLabelBase = "Selected";
+
+      /** @param {'description'|'notes'|'sdlc'|'links'} tab */
+      function setTab(tab){
+        activeTab = tab;
+        paneDescription.hidden = tab !== "description";
+        paneNotes.hidden = tab !== "notes";
+        paneSdlc.hidden = tab !== "sdlc";
+        paneLinks.hidden = tab !== "links";
+
+        tabDescription.setAttribute("aria-pressed", tab === "description" ? "true" : "false");
+        tabNotes.setAttribute("aria-pressed", tab === "notes" ? "true" : "false");
+        tabSdlc.setAttribute("aria-pressed", tab === "sdlc" ? "true" : "false");
+        tabLinks.setAttribute("aria-pressed", tab === "links" ? "true" : "false");
+
+        // One-line header label depends on the selected tab.
+        // Note: .desc-label uses text-transform:uppercase, so we can keep normal casing here.
+        if (tab === "description"){
+          descLabel.textContent = activeLabelBase;
+        } else if (tab === "notes"){
+          descLabel.textContent = `${activeLabelBase}: Additional information`;
+        } else if (tab === "sdlc"){
+          descLabel.textContent = `${activeLabelBase}: SDLC`;
+        } else {
+          descLabel.textContent = `${activeLabelBase}: Links`;
+        }
+      }
+
+      function escapeHtml(s){
+        return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[c]));
+      }
+
+      /** @param {any} href */
+      function isSafeHref(href){
+        const s = String(href || "").trim();
+        if (!s) return false;
+        const lower = s.toLowerCase();
+        if (lower.startsWith("javascript:") || lower.startsWith("data:")) return false;
+        return true;
+      }
+
+      /** @param {string} s */
+      function labelToLines(s){
+        const raw = String(s || "");
+        // allow authoring with "<br>" in labels; render as line breaks
+        const withBreaks = raw.replace(/<br\s*\/?>/gi, "\n");
+        // strip any remaining tags (labels are not meant to contain HTML beyond <br>)
+        const noTags = withBreaks.replace(/<\/?[^>]+>/g, "");
+        return noTags
+          .split(/\n+/)
+          .map((x) => x.trim())
+          .filter(Boolean);
+      }
+
+      /** @param {string} s */
+      function labelToPlainText(s){
+        return labelToLines(s).join(" ").replace(/\s+/g, " ").trim();
+      }
+
+      /** @param {string} s */
+      function labelToSafeHtml(s){
+        const lines = labelToLines(s);
+        return (lines.length ? lines : [String(s || "")]).map(escapeHtml).join("<br>");
+      }
+
+      /** @param {string} tag */
+      function svgEl(tag){ return /** @type {any} */(document.createElementNS("http://www.w3.org/2000/svg", tag)); }
+      /** @param {Element} el @param {Record<string,string|number>} attrs */
+      function setAttrs(el, attrs){
+        for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+      }
+      /** @param {string} lane */
+      function laneColor(lane){
+        const key = String(lane || "").toLowerCase();
+        if (key.includes("architect")) return "rgba(96,165,250,.40)"; // blue
+        if (key.includes("user focus")) return "rgba(251,191,36,.40)"; // amber
+        if (key.includes("users, sme")) return "rgba(52,211,153,.42)"; // green
+        if (key.trim() === "sme") return "rgba(34,211,238,.38)"; // cyan
+        if (key.includes("users")) return "rgba(167,139,250,.38)"; // violet
+        return "rgba(110,231,255,.26)";
+      }
+      /** @param {'none'|'block'|'check_point'} type @param {string} id */
+      function navIndexOf(type, id){
+        return navOrder.findIndex((x) => x.type === type && x.id === id);
+      }
+
+      function buildNavOrder(){
+        // Items are already in the intended order (intro, blocks, and check points).
+        navOrder = timelineData.phases.map((x) => ({ type: x.type, id: x.id }));
+      }
+
+      function renderTimelineSvg(){
+        // Clear
+        while (timelineG.firstChild) timelineG.removeChild(timelineG.firstChild);
+
+        const items = timelineData.phases;
+        const blocks = items.filter((x) => x.type === "block");
+        const blockIdxById = new Map(blocks.map((b, i) => [b.id, i]));
+
+        const W = 1500;
+        const marginX = 26;
+        const gap = 10;
+        const n = blocks.length;
+        const phaseW = Math.max(88, Math.floor((W - marginX*2 - gap*(n-1)) / n));
+        const phaseH = 62;
+        const phaseY = 88;
+        const cpY = 34;
+        const laneY = phaseY + phaseH + 18; // keep consistent spacing if phaseH changes
+        const laneH = 30;
+        const cpStemGap = 14; // keep CP stem clearly above phase blocks
+
+        /** @param {string} label */
+        function phaseLabelLines(label){
+          const s = String(label || "").trim();
+          const plain = labelToPlainText(s);
+          const lower = plain.toLowerCase();
+          if (lower === "product vision") return ["Product", "vision"];
+          if (lower === "roll out") return ["Roll", "out"];
+          const lines = labelToLines(s);
+          return lines.length ? lines : [plain || s];
+        }
+
+        // Lanes: group consecutive phases by same lane label.
+        /** @type {{start:number,end:number,label:string}[]} */
+        const segs = [];
+        for (let i=0;i<n;i++){
+          const lane = blocks[i].lane || "";
+          const last = segs[segs.length-1];
+          if (!last || last.label !== lane) segs.push({ start:i, end:i, label: lane });
+          else last.end = i;
+        }
+        for (const s of segs){
+          if (!String(s.label || "").trim()) continue; // draw only explicit involvement labels
+          const segX = marginX + s.start*(phaseW+gap);
+          const segW = (s.end - s.start + 1)*phaseW + (s.end - s.start)*gap;
+          const rect = svgEl("rect");
+          setAttrs(rect, {
+            x: segX,
+            y: laneY,
+            width: segW,
+            height: laneH,
+            rx: 10,
+            fill: laneColor(s.label),
+            class: "lane-seg"
+          });
+          timelineG.appendChild(rect);
+
+          const t = svgEl("text");
+          setAttrs(t, {
+            x: segX + segW/2,
+            y: laneY + 18,
+            "text-anchor":"middle",
+            class:"lane-text"
+          });
+          t.textContent = s.label;
+          timelineG.appendChild(t);
+        }
+
+        // Phases
+        for (let i=0;i<n;i++){
+          const p = blocks[i];
+          const x = marginX + i*(phaseW + gap);
+          const cx = x + phaseW/2;
+
+          const g = svgEl("g");
+          g.classList.add("phase-hit");
+          if (p.optional) g.classList.add("is-optional");
+          setAttrs(g, { "data-kind":"block", "data-id": p.id, role:"button", tabindex:"0", "aria-label": labelToPlainText(p.label) });
+
+          // Active glow (toggled by class on group)
+          const glow = svgEl("rect");
+          setAttrs(glow, { x: x-3, y: phaseY-3, width: phaseW+6, height: phaseH+6, rx: 14, class:"active-glow" });
+          g.appendChild(glow);
+
+          const r = svgEl("rect");
+          setAttrs(r, { x, y: phaseY, width: phaseW, height: phaseH, rx: 14, fill:"url(#gPanel)", class:"phase-rect" });
+          g.appendChild(r);
+
+          const label = svgEl("text");
+          const lines = phaseLabelLines(p.label);
+          const y0 = lines.length === 1 ? (phaseY + 40) : (phaseY + 28);
+          setAttrs(label, { x: cx, y: y0, "text-anchor":"middle", class:"label" });
+          for (let li=0; li<lines.length; li++){
+            const span = svgEl("tspan");
+            setAttrs(span, { x: cx, dy: li === 0 ? 0 : 18 });
+            span.textContent = lines[li];
+            label.appendChild(span);
+          }
+          g.appendChild(label);
+
+          timelineG.appendChild(g);
+
+          // Store center for checkpoint placement if needed (via data attribute for debugging)
+          g.setAttribute("data-cx", String(cx));
+        }
+
+        function checkpointBadgeText(cp){
+          const fromLabel = labelToPlainText(cp?.label || "").match(/\d+/)?.[0] || "";
+          const fromId = String(cp?.id || "").match(/\d+/)?.[0] || "";
+          return fromId || fromLabel || "";
+        }
+
+        // Checkpoints (rendered between blocks, based on their position in the items list)
+        for (let pos = 0; pos < items.length; pos++){
+          const cp = items[pos];
+          if (!cp || cp.type !== "check_point") continue;
+
+          // Find the nearest previous block to anchor this checkpoint.
+          let prevBlockId = "";
+          for (let j = pos - 1; j >= 0; j--){
+            const it = items[j];
+            if (it && it.type === "block"){
+              prevBlockId = it.id;
+              break;
+            }
+          }
+          const idx = prevBlockId ? (blockIdxById.get(prevBlockId) ?? -1) : -1;
+          if (idx < 0) continue;
+
+          // Place checkpoints BETWEEN phases (in the gap after the mapped phase),
+          // so the stem never overlaps the phase block.
+          const phaseLeft = marginX + idx*(phaseW + gap);
+          const isLast = idx >= (n - 1);
+          const x = isLast
+            ? (phaseLeft + phaseW/2) // fallback (shouldn't happen with current mapping)
+            : (phaseLeft + phaseW + gap/2);
+
+          const g = svgEl("g");
+          g.classList.add("cp-hit");
+          setAttrs(g, { "data-kind":"check_point", "data-id": cp.id, role:"button", tabindex:"0", "aria-label": labelToPlainText(cp.label) });
+
+          const stem = svgEl("line");
+          setAttrs(stem, { x1:x, y1: cpY+16, x2:x, y2: phaseY-cpStemGap, class:"cp-stem" });
+          g.appendChild(stem);
+
+          const glow = svgEl("circle");
+          setAttrs(glow, { cx:x, cy:cpY, r: 18, class:"active-glow" });
+          g.appendChild(glow);
+
+          const c = svgEl("circle");
+          setAttrs(c, { cx:x, cy:cpY, r: 16, class:"cp-circle" });
+          // tint by checkpoint color
+          if (cp.color){
+            c.setAttribute("fill", cp.color.replace(")", ", .18)").replace("rgba", "rgba"));
+            c.setAttribute("stroke", cp.color.replace(")", ", .70)").replace("rgba", "rgba"));
+          }
+          g.appendChild(c);
+
+          const t = svgEl("text");
+          setAttrs(t, { x:x, y:cpY+4, "text-anchor":"middle", class:"cp-text" });
+          t.textContent = checkpointBadgeText(cp);
+          g.appendChild(t);
+
+          timelineG.appendChild(g);
+        }
+      }
+
+      /** @param {{type:'none'|'block'|'check_point', id:string} | null} state */
+      function blockForSubPhases(state){
+        if (!state) return null;
+        if (state.type === "block"){
+          return timelineData.phases.find((p) => p.type === "block" && p.id === state.id) || null;
+        }
+        const pos = timelineData.phases.findIndex((x) => x.type === "check_point" && x.id === state.id);
+        if (pos < 0) return null;
+        for (let j = pos - 1; j >= 0; j--){
+          const it = timelineData.phases[j];
+          if (it && it.type === "block") return it;
+        }
+        return null;
+      }
+
+      /** @param {any} phase */
+      function renderSubPhases(phase){
+        if (!subPhasesShell || !subPhasesEl) return;
+        const list = Array.isArray(phase?.sub_phases) ? phase.sub_phases : [];
+        const items = list
+          .map((x) => {
+            if (typeof x === "string") return x;
+            return x?.label ?? x?.title ?? x?.name ?? "";
+          })
+          .map((s) => String(s || "").trim())
+          .filter(Boolean);
+
+        const isEmpty = items.length === 0;
+        subPhasesShell.classList.toggle("is-empty", isEmpty);
+        subPhasesEl.setAttribute("aria-hidden", isEmpty ? "true" : "false");
+        if (isEmpty){
+          subPhasesEl.innerHTML = "";
+          return;
+        }
+
+        subPhasesEl.innerHTML = items
+          .map((t, i) => `
+            <div class="subphase-pill" role="listitem">
+              <span class="subphase-t">${escapeHtml(labelToPlainText(t))}</span>
+            </div>
+          `.trim())
+          .join("");
+      }
+
+      function setActive(type, id){
+        active = { type, id };
+
+        const item = timelineData.phases.find((x) => x.id === id);
+        if (!item) return;
+
+        // In the Details panel we keep the title on one line (no <br> rendering).
+        activeLabelBase = labelToPlainText(item.label);
+        descContent.innerHTML = item.descriptionHtml || "<p>No description.</p>";
+
+        const notesRaw = (item && typeof item.notes === "string") ? item.notes : "";
+        const hasNotes = String(notesRaw).trim().length > 0;
+
+        const sdlcRaw = (item && typeof /** @type {any} */(item).sdlc === "string") ? /** @type {any} */(item).sdlc : "";
+        const hasSdlc = String(sdlcRaw).trim().length > 0;
+
+        const rawLinks = (item && Array.isArray(/** @type {any} */(item).links)) ? /** @type {any} */(item).links : [];
+        const linksHtml = rawLinks
+          .map((l) => {
+            if (!l || typeof l !== "object") return "";
+            const url = String(l.url || "").trim();
+            if (!isSafeHref(url)) return "";
+            const label = (typeof l.label === "string" && l.label.trim().length) ? l.label.trim() : url;
+            return `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`;
+          })
+          .filter(Boolean)
+          .join("");
+        const hasLinks = linksHtml.length > 0;
+
+        // Render notes/sdlc/links + enable/disable tabs
+        descNotes.innerHTML = hasNotes ? notesRaw : "";
+        descSdlc.innerHTML = hasSdlc ? sdlcRaw : "";
+        descLinks.innerHTML = hasLinks ? linksHtml : "";
+        tabNotes.disabled = !hasNotes;
+        tabSdlc.disabled = !hasSdlc;
+        tabLinks.disabled = !hasLinks;
+
+        // If current tab isn't available for this item, fall back to description.
+        const nextTab =
+          (activeTab === "notes" && !hasNotes) ? "description"
+          : (activeTab === "sdlc" && !hasSdlc) ? "description"
+          : (activeTab === "links" && !hasLinks) ? "description"
+          : activeTab;
+        setTab(nextTab);
+
+        // Update current label header
+        currentKind.textContent =
+          type === "block" ? "Current step"
+          : type === "check_point" ? "Current checkpoint"
+          : "Overview";
+        currentLabel.textContent = labelToPlainText(item.label);
+        currentA11y.textContent = labelToPlainText(item.label);
+
+        // Dot color
+        const dotColor = item.color || "rgba(110,231,255,.25)";
+        currentDot.style.background = dotColor;
+        currentDot.style.boxShadow = `0 0 0 3px ${String(dotColor).replace(")", ", .10)").replace("rgba","rgba")}`;
+
+        // Render sub-phases under the timeline (for the related phase only).
+        renderSubPhases(blockForSubPhases(active));
+
+        // Active states in SVG
+        const allSvg = Array.from(document.querySelectorAll("#timelineSvg [data-kind][data-id]"));
+        for (const el of allSvg){
+          const k = el.getAttribute("data-kind");
+          const eid = el.getAttribute("data-id");
+          const isOn = (k === type && eid === id);
+          el.classList.toggle("is-active", isOn);
+          el.setAttribute("aria-pressed", isOn ? "true" : "false");
+        }
+      }
+
+      function onClick(e){
+        const raw = /** @type {Element | null} */(e.target instanceof Element ? e.target.closest("[data-kind][data-id]") : null);
+        if (!raw){
+          // Clicked outside any selectable timeline item: show Introduction, and remove any lingering focus ring.
+          const ae = /** @type {any} */(document.activeElement);
+          if (ae && typeof ae.blur === "function") ae.blur();
+          setActive("none", "introduction");
+          return;
+        }
+        const type = /** @type {'block'|'check_point'} */(raw.getAttribute("data-kind"));
+        const id = raw.getAttribute("data-id") || "";
+        setActive(type, id);
+      }
+
+      function onKeydown(e){
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight"){
+          e.preventDefault();
+          if (!active) return;
+          const idx = navIndexOf(active.type, active.id);
+          if (idx < 0) return;
+          const next = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+          const wrapped = ((next % navOrder.length) + navOrder.length) % navOrder.length;
+          setActive(navOrder[wrapped].type, navOrder[wrapped].id);
+        }
+        if (e.key === "Enter" || e.key === " "){
+          const raw = /** @type {Element | null} */(e.target instanceof Element ? e.target.closest("[data-kind][data-id]") : null);
+          if (!raw) return;
+          e.preventDefault();
+          const type = /** @type {'block'|'check_point'} */(raw.getAttribute("data-kind"));
+          const id = raw.getAttribute("data-id") || "";
+          setActive(type, id);
+        }
+      }
+
+      function init(){
+        buildNavOrder();
+        renderTimelineSvg();
+
+        const timelineSvg = document.getElementById("timelineSvg");
+        timelineSvg?.addEventListener("click", onClick);
+        timelineSvg?.addEventListener("keydown", onKeydown);
+
+        btnPrev.addEventListener("click", () => {
+          if (!active) return;
+          const idx = navIndexOf(active.type, active.id);
+          const next = idx <= 0 ? navOrder.length - 1 : idx - 1;
+          setActive(navOrder[next].type, navOrder[next].id);
+        });
+        btnNext.addEventListener("click", () => {
+          if (!active) return;
+          const idx = navIndexOf(active.type, active.id);
+          const next = (idx + 1) % navOrder.length;
+          setActive(navOrder[next].type, navOrder[next].id);
+        });
+
+        tabDescription.addEventListener("click", () => setTab("description"));
+        tabNotes.addEventListener("click", () => { if (!tabNotes.disabled) setTab("notes"); });
+        tabSdlc.addEventListener("click", () => { if (!tabSdlc.disabled) setTab("sdlc"); });
+        tabLinks.addEventListener("click", () => { if (!tabLinks.disabled) setTab("links"); });
+
+        window.addEventListener("keydown", (e) => {
+          // Convenience navigation anywhere on the page, unless user is typing in an input.
+          const tag = /** @type {HTMLElement} */(e.target).tagName?.toLowerCase?.() || "";
+          if (tag === "input" || tag === "textarea" || tag === "select") return;
+          if (e.key === "[" || e.key === "ArrowLeft"){
+            btnPrev.click();
+          }
+          if (e.key === "]" || e.key === "ArrowRight"){
+            btnNext.click();
+          }
+        });
+
+        // Default selection: Introduction (overview) on load.
+        const intro = timelineData.phases.find((p) => p.id === "introduction");
+        if (intro) setActive("none", intro.id);
+        else if (timelineData.phases.length) setActive(timelineData.phases[0].type, timelineData.phases[0].id);
+      }
+
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+      else init();
+    })();
+  </script>
+</body>
+</html>

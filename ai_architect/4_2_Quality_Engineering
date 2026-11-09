@@ -1,0 +1,26 @@
+# Quality Engineering
+
+## Introduction to Evals
+Why evaluation of generative AI applications is fundamentally different from classical software testing - and how the absence of evals creates a reactive debugging loop that collapses development velocity. Covers core vocabulary (task, trial, transcript, grader, suite, harness) and a roadmap for going from zero to a working eval suite.
+
+[Demystifying evals for AI agents — Anthropic Engineering](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
+
+[A complete guide to LLM quality — EvidentlyAI](https://www.evidentlyai.com/llm-guide)
+
+## LLM-as-a-Judge
+Practical guide to using one LLM to score the outputs of another. Covers rubric design, bias mitigation (position, length, self-preference), calibration with human raters, and when LLM-as-judge is the wrong choice. The single most underestimated topic in production AI quality work.
+
+[Creating LLM-as-a-Judge That Drives Business Results — Hamel Husain](https://hamel.dev/blog/posts/llm-judge/)
+
+## Capability vs Reliability & Metrics
+The distinction between can the system do X (capability — pass@k) and will the system do X every time (reliability — pass^k), why most public benchmarks measure the wrong one, and how to choose metrics for retrieval, generation, and end-to-end agent tasks. Walks through which metric to pick for which problem type with concrete examples.
+  
+[Task-Specific LLM Evals That Do & Don't Work — Eugene Yan](https://eugeneyan.com/writing/evals/)
+
+## Production Observability & Online Evals
+
+Once a system is live, batch evals are not enough - drift moves first in embedding space and reasoning structure, not in surface tokens. Covers tracing fundamentals, sampling production traffic through judge graders, threshold alerts, and feeding production failures back into the eval dataset.
+
+[A Field Guide to Rapidly Improving AI Products](https://hamel.dev/blog/posts/field-guide/)
+
+[Semantic conventions for generative AI systems](https://opentelemetry.io/docs/specs/semconv/gen-ai/)

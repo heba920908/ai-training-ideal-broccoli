@@ -80,5 +80,3 @@ For instance, if an AI is trained on historical hiring data that reflects a gend
 When designing and implementing solutions that harness large language models, AI platforms, and AI frameworks, architects should thoughtfully blend deterministic and non‑deterministic techniques to meet business objectives. A deep grasp of how LLMs work, are built and trained is essential for creating cost‑efficient architectures that truly fit the intended purpose.
 
 [llm_architecture-en.html](./artifacts/llm_architecture-en.html)
-
-

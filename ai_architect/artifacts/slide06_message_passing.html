@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Passing vs Shared State</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #000000;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1;
+            padding: 10px 60px;
+            overflow-y: auto;
+            max-width: 100%;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 3px;
+            color: #60A5FA;
+            letter-spacing: -0.02em;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #A78BFA;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        button {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: transparent;
+            color: #60A5FA;
+            border: 2px solid #60A5FA;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        button:hover:not(:disabled) {
+            background: #60A5FA;
+            color: #000;
+        }
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        button.danger {
+            color: #F472B6;
+            border-color: #F472B6;
+        }
+        button.danger:hover:not(:disabled) {
+            background: #F472B6;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .approach-box {
+            background: #0A0A0A;
+            border: 2px solid #333;
+            padding: 10px;
+        }
+        .approach-box.shared {
+            grid-column: 1 / -1;
+        }
+        .approach-box.message {
+            border-color: #3B82F6;
+        }
+        .approach-box.shared {
+            border-color: #8B5CF6;
+        }
+        .approach-header {
+            margin-bottom: 10px;
+        }
+        .approach-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .approach-box.message h2 {
+            color: #60A5FA;
+        }
+        .approach-box.shared h2 {
+            color: #A78BFA;
+        }
+        .approach-header p {
+            font-size: 0.85rem;
+            color: #999;
+            line-height: 1.5;
+        }
+        .content-flex {
+            display: flex;
+            gap: 10px;
+        }
+        .diagram-area {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            height: 200px;
+            position: relative;
+            flex: 1.5;
+            min-width: 0;
+        }
+        .approach-box.shared .diagram-area {
+            height: 280px;
+            flex: 0.8;
+        }
+        .agent {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #1A1A1A;
+            border: 3px solid #60A5FA;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .approach-box.shared .agent {
+            width: 60px;
+            height: 60px;
+            border-width: 2px;
+        }
+        .agent.active {
+            border-color: #10B981;
+            background: #0F1419;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        .agent.error {
+            border-color: #F472B6;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .agent-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        .approach-box.shared .agent-icon {
+            font-size: 1.5rem;
+            margin-bottom: 3px;
+        }
+        .agent-name {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+        }
+        .approach-box.shared .agent-name {
+            font-size: 0.65rem;
+        }
+        #agentA1 { top: 50px; left: 50px; }
+        #agentB1 { top: 50px; right: 50px; }
+        #agentA2 { top: 60px; left: 100px; }
+        #agentB2 { top: 60px; right: 100px; }
+        .message {
+            position: absolute;
+            background: #3B82F6;
+            color: #FFF;
+            padding: 8px 15px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+        .message.visible {
+            opacity: 1;
+        }
+        .shared-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 110px;
+            background: #1A1A1A;
+            border: 2px solid #A78BFA;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .shared-state.corrupted {
+            border-color: #F472B6;
+            background: #1A0A0F;
+        }
+        .state-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        .state-label {
+            font-size: 0.7rem;
+            color: #999;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .state-value {
+            font-size: 0.85rem;
+            color: #60A5FA;
+            font-family: 'Courier New', monospace;
+        }
+        .log-area {
+            background: #000;
+            border: 1px solid #333;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #CCC;
+            line-height: 1.4;
+            height: 200px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .approach-box.shared .log-area {
+            height: 280px;
+            flex: 2;
+        }
+        .log-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        .log-area::-webkit-scrollbar-track {
+            background: #000;
+        }
+        .log-area::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+        .log-line {
+            margin-bottom: 4px;
+        }
+        .log-line.success {
+            color: #10B981;
+        }
+        .log-line.error {
+            color: #F472B6;
+        }
+        .log-line.info {
+            color: #60A5FA;
+        }
+        .metrics-table {
+            width: 100%;
+            background: #0A0A0A;
+            border: 1px solid #333;
+            margin-top: 30px;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .metrics-table th {
+            background: #1A1A1A;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #A78BFA;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #333;
+        }
+        .metrics-table td {
+            padding: 8px 10px;
+            border-top: 1px solid #1A1A1A;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .metrics-table td:first-child {
+            font-weight: 600;
+            color: #A78BFA;
+            width: 20%;
+        }
+        .metrics-table tr:hover {
+            background: #0F1419;
+        }
+        .metric-good {
+            color: #10B981;
+            font-weight: 500;
+        }
+        .metric-good::before {
+            content: '✓ ';
+            font-weight: 600;
+        }
+        .metric-bad {
+            color: #F472B6;
+            font-weight: 500;
+        }
+        .metric-bad::before {
+            content: '✗ ';
+            font-weight: 600;
+        }
+        .metric-neutral {
+            color: #CCC;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Message Passing vs Shared State</h1>
+        <p class="subtitle">Two fundamental approaches to multi-agent coordination</p>
+
+        <div class="controls">
+            <button onclick="runNormalFlow()">▶ Run Normal Flow</button>
+            <button class="danger" onclick="introduceFailure()">💥 Introduce Failure</button>
+            <button onclick="reset()">Reset</button>
+        </div>
+
+        <div class="comparison-grid">
+            <!-- Message Passing -->
+            <div class="approach-box message">
+                <div class="approach-header">
+                    <h2>📨 Message Passing</h2>
+                    <p>Loose coupling: Agents communicate through explicit messages. Each agent is independent.</p>
+                </div>
+                <div class="content-flex">
+                    <div class="diagram-area" id="messageDiagram">
+                        <div class="agent" id="agentA1">
+                            <div class="agent-icon">🤖</div>
+                            <div class="agent-name">Agent A</div>
+                        </div>
+                        <div class="agent" id="agentB1">
+                            <div class="agent-icon">🤖</div>
+                            <div class="agent-name">Agent B</div>
+                        </div>
+                        <div class="message" id="message1" style="top: 85px; left: 50%; transform: translateX(-50%);">
+                            Processing...
+                        </div>
+                    </div>
+                    <div class="log-area" id="messageLog">
+                        <div class="log-line">Ready. Click "Run Normal Flow" to simulate...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shared State -->
+            <div class="approach-box shared">
+                <div class="approach-header">
+                    <h2>🗄️ Shared State</h2>
+                    <p>Tight coupling: Agents read/write to a common database. Fast but coordination required.</p>
+                </div>
+                <div class="content-flex">
+                    <div class="diagram-area" id="sharedDiagram">
+                        <div class="agent" id="agentA2">
+                            <div class="agent-icon">🤖</div>
+                            <div class="agent-name">Agent A</div>
+                        </div>
+                        <div class="agent" id="agentB2">
+                            <div class="agent-icon">🤖</div>
+                            <div class="agent-name">Agent B</div>
+                        </div>
+                        <div class="shared-state" id="sharedState">
+                            <div class="state-icon">💾</div>
+                            <div class="state-label">SHARED STATE</div>
+                            <div class="state-value" id="stateValue">count: 0</div>
+                        </div>
+                    </div>
+                    <div class="log-area" id="sharedLog">
+                        <div class="log-line">Ready. Click "Run Normal Flow" to simulate...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table class="metrics-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Message Passing</th>
+                    <th>Shared State</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Coupling</td>
+                    <td class="metric-good">Loose (independent agents)</td>
+                    <td class="metric-bad">Tight (shared dependency)</td>
+                </tr>
+                <tr>
+                    <td>Latency</td>
+                    <td class="metric-neutral">~50-200ms (network + serialization)</td>
+                    <td class="metric-good">~5-20ms (local access)</td>
+                </tr>
+                <tr>
+                    <td>Failure Isolation</td>
+                    <td class="metric-good">High (failures stay local)</td>
+                    <td class="metric-bad">Low (corruption can spread)</td>
+                </tr>
+                <tr>
+                    <td>Debugging</td>
+                    <td class="metric-good">Easier (message trace available)</td>
+                    <td class="metric-bad">Harder (race conditions possible)</td>
+                </tr>
+                <tr>
+                    <td>Scalability</td>
+                    <td class="metric-good">High (horizontal scaling)</td>
+                    <td class="metric-bad">Limited (DB bottleneck)</td>
+                </tr>
+                <tr>
+                    <td>Best For</td>
+                    <td class="metric-neutral">Distributed systems, microservices</td>
+                    <td class="metric-neutral">Single-process, low-latency needs</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let isRunning = false;
+
+        function reset() {
+            isRunning = false;
+
+            // Reset message passing
+            document.getElementById('agentA1').className = 'agent';
+            document.getElementById('agentB1').className = 'agent';
+            document.getElementById('message1').classList.remove('visible');
+            document.getElementById('messageLog').innerHTML = '<div class="log-line">Ready. Click "Run Normal Flow" to simulate...</div>';
+
+            // Reset shared state
+            document.getElementById('agentA2').className = 'agent';
+            document.getElementById('agentB2').className = 'agent';
+            document.getElementById('sharedState').className = 'shared-state';
+            document.getElementById('stateValue').textContent = 'count: 0';
+            document.getElementById('sharedLog').innerHTML = '<div class="log-line">Ready. Click "Run Normal Flow" to simulate...</div>';
+        }
+
+        async function runNormalFlow() {
+            if (isRunning) return;
+            isRunning = true;
+            reset();
+
+            // Message Passing Flow
+            addLog('messageLog', 'info', 'Agent A: Starting task...');
+            document.getElementById('agentA1').classList.add('active');
+            await sleep(500);
+
+            addLog('messageLog', 'info', 'Agent A: Sending message to Agent B...');
+            document.getElementById('message1').textContent = 'Task data: {id: 123}';
+            document.getElementById('message1').classList.add('visible');
+            await sleep(800);
+
+            document.getElementById('agentA1').classList.remove('active');
+            document.getElementById('message1').classList.remove('visible');
+            document.getElementById('agentB1').classList.add('active');
+            addLog('messageLog', 'info', 'Agent B: Received message');
+            await sleep(500);
+
+            addLog('messageLog', 'info', 'Agent B: Processing task...');
+            await sleep(600);
+
+            addLog('messageLog', 'success', 'Agent B: Task complete');
+            document.getElementById('agentB1').classList.remove('active');
+
+            // Shared State Flow
+            addLog('sharedLog', 'info', 'Agent A: Reading shared state...');
+            document.getElementById('agentA2').classList.add('active');
+            await sleep(500);
+
+            addLog('sharedLog', 'info', 'Agent A: count = 0, incrementing...');
+            document.getElementById('stateValue').textContent = 'count: 1';
+            await sleep(500);
+
+            addLog('sharedLog', 'info', 'Agent A: Write complete');
+            document.getElementById('agentA2').classList.remove('active');
+            await sleep(300);
+
+            addLog('sharedLog', 'info', 'Agent B: Reading shared state...');
+            document.getElementById('agentB2').classList.add('active');
+            await sleep(500);
+
+            addLog('sharedLog', 'info', 'Agent B: count = 1, incrementing...');
+            document.getElementById('stateValue').textContent = 'count: 2';
+            await sleep(500);
+
+            addLog('sharedLog', 'success', 'Agent B: Write complete');
+            document.getElementById('agentB2').classList.remove('active');
+
+            isRunning = false;
+        }
+
+        async function introduceFailure() {
+            if (isRunning) return;
+            isRunning = true;
+            reset();
+
+            // Message Passing - Agent B crashes
+            addLog('messageLog', 'info', 'Agent A: Starting task...');
+            document.getElementById('agentA1').classList.add('active');
+            await sleep(500);
+
+            addLog('messageLog', 'info', 'Agent A: Sending message to Agent B...');
+            document.getElementById('message1').textContent = 'Task data: {id: 123}';
+            document.getElementById('message1').classList.add('visible');
+            await sleep(800);
+
+            document.getElementById('agentB1').classList.add('error');
+            document.getElementById('message1').classList.remove('visible');
+            addLog('messageLog', 'error', 'Agent B: CRASHED (out of memory)');
+            await sleep(600);
+
+            addLog('messageLog', 'info', 'Agent A: Retry sending message...');
+            document.getElementById('message1').classList.add('visible');
+            await sleep(800);
+
+            addLog('messageLog', 'error', 'Agent A: Delivery failed, queuing for retry');
+            document.getElementById('message1').classList.remove('visible');
+            await sleep(500);
+
+            addLog('messageLog', 'success', 'System: Message queued, will retry when B recovers');
+            document.getElementById('agentA1').classList.remove('active');
+            document.getElementById('agentB1').classList.remove('error');
+
+            // Shared State - Race condition
+            addLog('sharedLog', 'info', 'Agent A: Reading shared state (count = 0)...');
+            document.getElementById('agentA2').classList.add('active');
+            await sleep(400);
+
+            addLog('sharedLog', 'info', 'Agent B: Reading shared state (count = 0)...');
+            document.getElementById('agentB2').classList.add('active');
+            await sleep(400);
+
+            addLog('sharedLog', 'info', 'Agent A: Incrementing to 1, writing...');
+            document.getElementById('stateValue').textContent = 'count: 1';
+            await sleep(300);
+
+            addLog('sharedLog', 'error', 'Agent B: Incrementing to 1, writing...');
+            document.getElementById('stateValue').textContent = 'count: 1';
+            document.getElementById('sharedState').classList.add('corrupted');
+            await sleep(500);
+
+            addLog('sharedLog', 'error', '⚠️ RACE CONDITION: Lost update! Expected 2, got 1');
+            document.getElementById('agentA2').classList.remove('active');
+            document.getElementById('agentB2').classList.remove('active');
+
+            isRunning = false;
+        }
+
+        function addLog(logId, type, message) {
+            const log = document.getElementById(logId);
+            const line = document.createElement('div');
+            line.className = `log-line ${type}`;
+            line.textContent = message;
+            log.appendChild(line);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
